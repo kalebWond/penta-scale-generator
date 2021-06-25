@@ -3,7 +3,8 @@ import { useLayoutEffect, useState } from 'react'
 import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, sleep, playKey } from './_helpers';
 
 function Piano() {
-    const [showKeys, setShowKeys] = useState(false);
+    const [showKeys, setShowKeys] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false)
     useLayoutEffect(() => {
         document.addEventListener('keydown', playSoundByKeyboard)
         const keys = Array.from(document.querySelectorAll('.set div'))
@@ -98,27 +99,53 @@ function Piano() {
                 </div>
                 <audio src="assets/sounds/"></audio>
             </ul>
-            {/* <Controls getControlData={getControlData} /> */}
+            <Controls getControlData={getControlData} />
         </>
     );
 
-    // function getControlData(data) {
-    //     const pattern = getScalePattern(data.scale);
-    //     playScale(pattern)
-    // }
+    function getControlData(data) {
+        const pattern = getScalePattern(data.scale);
+        playScale(pattern)
+    }
 
-    // function playScale(pattern) {
-    //     const keys = Array.from(document.querySelectorAll('.set div')).slice(0, 13)
-    //     console.log(pattern)
-    //     playKey(keys[0])
-    //     pattern.forEach(async (pat, i) => {
-    //         // if(i === 3) {
-    //         //     await sleep(400)
-    //         // }
-    //         console.log(pat, i)
-    //         playKey(keys[(pat*2) + (i*2)])
-    //     })
-    // }
+    async function playScale(pattern) {
+        if(!pattern || isPlaying) {
+            return;
+        }
+        setIsPlaying(true)
+        const keys = Array.from(document.querySelectorAll('.set div')).slice(0, 13)
+        playKey(keys[0])
+        const backwards = [keys[0]]
+        let prevSum = 0;
+        for(let i = 0; i < pattern.length; i++) {
+            if(i === 2) {
+                await sleep(1000)
+            } else if(i === 4) {
+                await sleep(700)
+            } else if(i === 3) {
+                await sleep(500)
+            } else {
+                await sleep(450)
+            }
+            playKey(keys[(pattern[i]*2) + (prevSum*2)])
+            backwards.unshift(keys[(pattern[i]*2) + (prevSum*2)])
+            prevSum += pattern[i];
+        }
+        for (let i = 0; i < backwards.length; i++) {
+            const key = backwards[i];
+            if(i === 0) {
+                await sleep(1500)
+            } else if(i === 3) {
+                await sleep(800)
+            } else if(i === 5) {
+                await sleep(850)
+            } else {
+                await sleep(500)
+            }
+            playKey(key)
+        }
+        setIsPlaying(false)
+    }
 }
 
 export default Piano
