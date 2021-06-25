@@ -1,38 +1,138 @@
-.App {
-  text-align: center;
+:root {
+  --select-border: #777;
+  --select-focus: blue;
+  --select-arrow: var(--select-border);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+body {
+  margin: 0;
+  background: #222;
+  background-image: url(img/grass.jpg);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+ul {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: relative;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  height: 18.875em;
+  width: 68em;
+  margin: 5em auto;
+  padding: 3em 2em 3em 3.5em;
+  border: 1px solid #160801;
+  border-radius: 1em;
+  background: linear-gradient(
+      to bottom right,
+      rgba(0, 0, 0, 0.3),
+      rgba(0, 0, 0, 0)
+    ),
+    url(img/wood.png);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5) inset,
+    0 1px rgba(212, 152, 125, 0.2) inset, 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
-.App-link {
-  color: #61dafb;
+.white {
+  position: relative;
+  height: 16em;
+  width: 4em;
+  border-left: 1px solid #bbb;
+  border-bottom: 1px solid #bbb;
+  border-radius: 0 0 5px 5px;
+  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.8) inset, 0 0 5px #ccc inset,
+    0 0 3px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, #eee 0%, #fff 100%);
+  transition: all .1s;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.black {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translateX(50%);
+  height: 9em;
+  width: 2em;
+  z-index: 20;
+  border: 1px solid #000;
+  border-radius: 0 0 3px 3px;
+  box-shadow: -1px -1px 2px rgba(255, 255, 255, 0.2) inset,
+    0 -5px 2px 3px rgba(0, 0, 0, 0.6) inset, 0 2px 4px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(45deg, #222 0%, #555 100%);
+  transition: all .1s;
+}
+
+.white-active {
+  border-left: 1px solid #999;
+  border-bottom: 1px solid #999;
+  box-shadow: 2px 0 3px rgba(0, 0, 0, 0.1) inset,
+    2px 5px 20px rgba(0, 0, 0, 0.2) inset, 0 0 3px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom, #fff 0%, #e9e9e9 100%);
+}
+
+.black-active {
+  box-shadow: -1px -1px 2px rgba(255, 255, 255, 0.2) inset,
+    0 -2px 2px 3px rgba(0, 0, 0, 0.6) inset, 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(to right, #444 0%, #222 100%);
+}
+
+ul .white:first-child {
+  border-radius: 5px 0 5px 5px;
+}
+
+ul .white:last-child {
+  border-radius: 0 5px 5px 5px;
+}
+
+div .text {
+  position: absolute;
+  top: 30px;
+  right: 50%;
+  transform: translateX(50%);
+  color: #555;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+div.black .text {
+  color: #ccc;
+}
+
+.c4::after {
+  content: "";
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-image: radial-gradient(gray, darkgray);
+}
+
+.key-control  {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  text-align: center;
+  cursor: pointer;
+}
+
+.key-control .img {
+  width: 30px;
+  height: 30px;
+}
+
+.controls {
+  display: flex;
+}
+
+label {
+  color: #ccc;
+}
+
+select {
+  font-size: 1rem;
 }
