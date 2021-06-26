@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
 function Controls({getControlData}) {
-    const [scale, setScale] = useState('')
+    const [scale, setScale] = useState('TIZITA-1')
+    const [variation, setVariation] = useState("")
     return (
         <div className="controls">
             <div>
-                <select value={scale} onChange={(({target}) => setScale(target.value))} id="standard-select">
+                <select value={scale} onChange={({target}) => setScale(target.value)} id="standard-select">
                     <option disabled value="">Select scale</option>
                     <option value="TIZITA-1">Tizita major</option>
                     <option value="TIZITA-2">Tizita minor</option>
@@ -15,14 +16,20 @@ function Controls({getControlData}) {
                     <option value="BATI-2">Bati minor</option>
                     <option value="ANCHOYE">Anchi hoye lene</option>
                 </select>
-                <span className="focus"></span>
+                <select value={variation} onChange={({target}) => setVariation(parseInt(target.value))} id="standard-select">
+                    <option disabled value="">Select variation</option>
+                    <option value="0">1st</option>
+                    <option value="1">2nd</option>
+                    <option value="3">5th</option>
+                    <option value="4">6th</option>
+                </select>
             </div>
-            <button onClick={clickHandler}>Play</button>
+            <button className="btn" onClick={clickHandler}>Play</button>
         </div>
     )
 
     function clickHandler() {
-        getControlData({scale})
+        getControlData({scale, variation: variation || 0})
     }
 }
 

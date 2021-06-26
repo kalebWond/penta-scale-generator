@@ -1,10 +1,13 @@
 import Controls from './Controls';
 import { useLayoutEffect, useState } from 'react'
-import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, sleep, playKey } from './_helpers';
+import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, sleep, playKey, mapVariationToStart } from './_helpers';
+import KeyPrint from './KeyPrint';
 
 function Piano() {
     const [showKeys, setShowKeys] = useState(true);
     const [isPlaying, setIsPlaying] = useState(false)
+    const [touchedKeys, setTouchedKeys] = useState([])
+
     useLayoutEffect(() => {
         document.addEventListener('keydown', playSoundByKeyboard)
         const keys = Array.from(document.querySelectorAll('.set div'))
@@ -100,24 +103,28 @@ function Piano() {
                 <audio src="assets/sounds/"></audio>
             </ul>
             <Controls getControlData={getControlData} />
+            { touchedKeys.length > 0 && <KeyPrint showKeys={showKeys} notes={touchedKeys} /> }
         </>
     );
 
     function getControlData(data) {
-        const pattern = getScalePattern(data.scale);
-        playScale(pattern)
+        const pattern = getScalePattern(data);
+        playScale(pattern, data.variation)
     }
 
-    async function playScale(pattern) {
+    async function playScale(pattern, variation) {
         if(!pattern || isPlaying) {
             return;
         }
         setIsPlaying(true)
-        const keys = Array.from(document.querySelectorAll('.set div')).slice(0, 13)
-        playKey(keys[0])
-        const backwards = [keys[0]]
-        let prevSum = 0;
+        const keys = Array.from(document.querySelectorAll('.set div'));
+        const start = mapVariationToStart(variation)
+        playKey(keys[start])
+        const backwards = [keys[start]]
+        let prevSum = start;
         for(let i = 0; i < pattern.length; i++) {
+            const note = keys[(pattern[i]*2) + (prevSum)]
+            backwards.unshift(note)
             if(i === 2) {
                 await sleep(1000)
             } else if(i === 4) {
@@ -127,10 +134,11 @@ function Piano() {
             } else {
                 await sleep(450)
             }
-            playKey(keys[(pattern[i]*2) + (prevSum*2)])
-            backwards.unshift(keys[(pattern[i]*2) + (prevSum*2)])
-            prevSum += pattern[i];
+            playKey(note)
+            prevSum += pattern[i]*2;
         }
+        setTouchedKeys([...backwards].reverse())
+        // console.log(backwards); return;
         for (let i = 0; i < backwards.length; i++) {
             const key = backwards[i];
             if(i === 0) {

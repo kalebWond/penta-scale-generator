@@ -1,19 +1,27 @@
-export const getScalePattern = (name) => {
-    switch (name) {
+export const getScalePattern = ({scale, variation}) => {
+    let pattern;
+    switch (scale) {
         case "TIZITA-1":
-            return [1, 1, 1.5, 1, 1.5]
+            pattern = [1, 1, 1.5, 1, 1.5]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "TIZITA-2":
-            return [1, 0.5, 2, 0.5, 2]
+            pattern = [1, 0.5, 2, 0.5, 2]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "AMBASEL-1":
-            return [1, 1.5, 1, 1, 1.5]
+            pattern = [1, 1.5, 1, 1, 1.5]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "AMBASEL-2":
-            return [0.5, 2, 1, 0.5, 2]
+            pattern = [0.5, 2, 1, 0.5, 2]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "BATI-1":
-            return [2, 0.5, 1, 2, 0.5]
+            pattern = [2, 0.5, 1, 2, 0.5]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "BATI-2":
-            return [1.5, 1, 1, 1.5, 1]
+            pattern = [1.5, 1, 1, 1.5, 1]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         case "ANCHOYE":
-            return [0.5, 2, 0.5, 1.5, 1.5]
+            pattern = [0.5, 2, 0.5, 1.5, 1.5]
+            return [...pattern.slice(variation), ...pattern.slice(0, variation)]
         default:
             break;
     }
@@ -75,4 +83,9 @@ export const playKey = (note) => {
     newAudio.src = `${newAudio.src}${key}.ogg`;
     newAudio.currentTime = 0;
     newAudio.play();
+}
+
+export const mapVariationToStart = (variation) => {
+    const map = { 0: 0, 1: 2, 3: 7, 4: 9 }
+    return map[variation]
 }
