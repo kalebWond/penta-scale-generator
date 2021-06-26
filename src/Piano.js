@@ -1,12 +1,15 @@
 import Controls from './Controls';
 import { useLayoutEffect, useState } from 'react'
-import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, sleep, playKey, mapVariationToStart } from './_helpers';
+import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, mapVariationToStart, getKeysTobePlayed, playScaleForward, playScaleBackward } from './_helpers';
 import KeyPrint from './KeyPrint';
+import Similarity from './Similarity';
+import Footer from './Footer';
 
 function Piano() {
     const [showKeys, setShowKeys] = useState(true);
     const [isPlaying, setIsPlaying] = useState(false)
     const [touchedKeys, setTouchedKeys] = useState([])
+    const [formula, setFormula] = useState()
 
     useLayoutEffect(() => {
         document.addEventListener('keydown', playSoundByKeyboard)
@@ -21,95 +24,105 @@ function Piano() {
     }, [])
     return (
         <>
+            <header className="header">
+                Learn Pentatonic Scale
+            </header>
             <ul className="set">
                 <p onClick={() => setShowKeys(!showKeys)} className={`${showKeys ? '' : 'fade'} key-control`}>
                     <img src={showKeys ? "assets/img/keys_mode_on.png" : "assets/img/keys_mode_off.png"} alt="" className="img" />
                 </p>
                 <div className="white" data-key="C3" data-code="81">
-                    {showKeys && <span className="text">q</span>}
+                    {showKeys && <span className="key-text">q</span>}
                     <div className="black" data-code="50" data-key="Db3">
-                        {showKeys && <span className="text">2</span>}
+                        {showKeys && <span className="key-text">2</span>}
                     </div>
                 </div>
                 <div className="white" data-key="D3" data-code="87">
-                    {showKeys && <span className="text">w</span>}
+                    {showKeys && <span className="key-text">w</span>}
                     <div className="black" data-code="51" data-key="Eb3">
-                        {showKeys && <span className="text">3</span>}
+                        {showKeys && <span className="key-text">3</span>}
                     </div>
                 </div>
                 <div className="white" data-key="E3" data-code="69">
-                    {showKeys && <span className="text">e</span>}
+                    {showKeys && <span className="key-text">e</span>}
                 </div>
                 <div className="white" data-key="F3" data-code="82">
-                    {showKeys && <span className="text">r</span>}
+                    {showKeys && <span className="key-text">r</span>}
                     <div className="black" data-code="53" data-key="Gb3">
-                        {showKeys && <span className="text">5</span>}
+                        {showKeys && <span className="key-text">5</span>}
                     </div>
                 </div>
                 <div className="white" data-key="G3" data-code="84">
-                    {showKeys && <span className="text">t</span>}
+                    {showKeys && <span className="key-text">t</span>}
                     <div className="black" data-code="54" data-key="Ab3">
-                        {showKeys && <span className="text">6</span>}
+                        {showKeys && <span className="key-text">6</span>}
                     </div>
                 </div>
                 <div className="white" data-key="A3" data-code="89">
-                    {showKeys && <span className="text">y</span>}
+                    {showKeys && <span className="key-text">y</span>}
                     <div className="black" data-code="55" data-key="Bb3">
-                        {showKeys && <span className="text">7</span>}
+                        {showKeys && <span className="key-text">7</span>}
                     </div>
                 </div>
                 <div className="white" data-key="B3" data-code="85">
-                    {showKeys && <span className="text">u</span>}
+                    {showKeys && <span className="key-text">u</span>}
                 </div>
                 <div className="white" data-key="C4" data-code="73">
-                    {showKeys && <span className="text">i</span>}
+                    {showKeys && <span className="key-text">i</span>}
                     <div className="black" data-code="57" data-key="Db4">
-                        {showKeys && <span className="text">9</span>}
+                        {showKeys && <span className="key-text">9</span>}
                     </div>
                 </div>
                 <div className="white" data-key="D4" data-code="79">
-                    {showKeys && <span className="text">o</span>}
+                    {showKeys && <span className="key-text">o</span>}
                     <div className="black" data-code="48" data-key="Eb4">
-                        {showKeys && <span className="text">0</span>}
+                        {showKeys && <span className="key-text">0</span>}
                     </div>
                 </div>
                 <div className="white" data-key="E4" data-code="80">
-                    {showKeys && <span className="text">p</span>}
+                    {showKeys && <span className="key-text">p</span>}
                 </div>
                 <div className="white" data-key="F4" data-code="90">
-                    {showKeys && <span className="text">z</span>}
+                    {showKeys && <span className="key-text">z</span>}
                     <div className="black" data-code="83" data-key="Gb4">
-                        {showKeys && <span className="text">s</span>}
+                        {showKeys && <span className="key-text">s</span>}
                     </div>
                 </div>
                 <div className="white" data-key="G4" data-code="88">
-                    {showKeys && <span className="text">x</span>}
+                    {showKeys && <span className="key-text">x</span>}
                     <div className="black" data-code="68" data-key="Ab4">
-                        {showKeys && <span className="text">d</span>}
+                        {showKeys && <span className="key-text">d</span>}
                     </div>
                 </div>
                 <div className="white" data-key="A4" data-code="67">
-                    {showKeys && <span className="text">c</span>}
+                    {showKeys && <span className="key-text">c</span>}
                     <div className="black" data-code="70" data-key="Bb4">
-                        {showKeys && <span className="text">f</span>}
+                        {showKeys && <span className="key-text">f</span>}
                     </div>
                 </div>
                 <div className="white" data-key="B4" data-code="86">
-                    {showKeys && <span className="text">v</span>}
+                    {showKeys && <span className="key-text">v</span>}
                 </div>
                 <div className="white" data-key="C5" data-code="66">
-                    {showKeys && <span className="text">b</span>}
+                    {showKeys && <span className="key-text">b</span>}
                 </div>
                 <audio src="assets/sounds/"></audio>
             </ul>
             <Controls getControlData={getControlData} />
-            { touchedKeys.length > 0 && <KeyPrint showKeys={showKeys} notes={touchedKeys} /> }
+            { touchedKeys.length > 0 && <KeyPrint notes={touchedKeys} pattern={formula} /> }
+            <Similarity playPattern={playPattern} />
+            <Footer />
         </>
     );
 
     function getControlData(data) {
         const pattern = getScalePattern(data);
+        setFormula(pattern)
         playScale(pattern, data.variation, data.major)
+    }
+
+    function playPattern(pattern, variation) {
+        playScale(pattern, variation, 0)
     }
 
     async function playScale(pattern, variation, major) {
@@ -117,41 +130,16 @@ function Piano() {
             return;
         }
         setIsPlaying(true)
-        const keys = Array.from(document.querySelectorAll('.set div'));
-        const start = mapVariationToStart(variation) + parseInt(major)
-        playKey(keys[start])
-        const backwards = [keys[start]]
-        let prevSum = start;
-        for(let i = 0; i < pattern.length; i++) {
-            const note = keys[(pattern[i]*2) + (prevSum)]
-            backwards.unshift(note)
-            if(i === 2) {
-                await sleep(1000)
-            } else if(i === 4) {
-                await sleep(700)
-            } else if(i === 3) {
-                await sleep(500)
-            } else {
-                await sleep(450)
-            }
-            playKey(note)
-            prevSum += pattern[i]*2;
-        }
-        setTouchedKeys([...backwards].reverse())
-        // console.log(backwards); return;
-        for (let i = 0; i < backwards.length; i++) {
-            const key = backwards[i];
-            if(i === 0) {
-                await sleep(1500)
-            } else if(i === 3) {
-                await sleep(800)
-            } else if(i === 5) {
-                await sleep(850)
-            } else {
-                await sleep(500)
-            }
-            playKey(key)
-        }
+        let keys = Array.from(document.querySelectorAll('.set div'));
+        const start = mapVariationToStart(variation) + parseInt(major);
+        // GET KEYS
+        keys = getKeysTobePlayed(keys, pattern, start)
+        // DISPLAY KEYS
+        setTouchedKeys(keys)
+        // PLAY FORWARD
+        await playScaleForward(keys)
+        // PLAY BACKWARD
+        await playScaleBackward(keys)
         setIsPlaying(false)
     }
 }
