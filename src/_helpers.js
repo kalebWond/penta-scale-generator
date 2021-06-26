@@ -71,6 +71,9 @@ export const sleep = (ms) => {
 }
 
 export const playKey = (note) => {
+    if(!note) {
+        return;
+    }
     const audio = document.querySelector('audio')
     // reset the audio src tag
     audio.src = "assets/sounds/";
@@ -89,3 +92,37 @@ export const mapVariationToStart = (variation) => {
     const map = { 0: 0, 1: 2, 3: 7, 4: 9 }
     return map[variation]
 }
+
+export const scales = [
+    { value: '', label: 'Select scale' },
+    { value: 'TIZITA-1', label: 'Tizita major' },
+    { value: 'TIZITA-2', label: 'Tizita minor' },
+    { value: 'AMBASEL-1', label: 'Ambasel major' },
+    { value: 'AMBASEL-2', label: 'Ambasel minor' },
+    { value: 'BATI-1', label: 'Bati major' },
+    { value: 'BATI-2', label: 'Bati minor' },
+    { value: 'ANCHOYE', label: 'Anchi hoye lene' },
+]
+export const variations = [
+    { value: '', label: 'Select variation' },
+    { value: '0', label: '1st' },
+    { value: '1', label: '2nd' },
+    { value: '3', label: '5th' },
+    { value: '4', label: '6th' },
+]
+
+export const majors = [
+    { value: '', label: 'Select major' },
+    { value: '0', label: 'C' },
+    { value: '1', label: 'C#' },
+    { value: '2', label: 'D' },
+    { value: '3', label: 'D#' },
+    { value: '4', label: 'E' },
+    { value: '5', label: 'F' },
+    { value: '6', label: 'F#' },
+    { value: '7', label: 'G' },
+    { value: '8', label: 'G#' },
+    { value: '9', label: 'A' },
+    { value: '10', label: 'A#' },
+    { value: '11', label: 'B' },
+]

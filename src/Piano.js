@@ -109,16 +109,16 @@ function Piano() {
 
     function getControlData(data) {
         const pattern = getScalePattern(data);
-        playScale(pattern, data.variation)
+        playScale(pattern, data.variation, data.major)
     }
 
-    async function playScale(pattern, variation) {
+    async function playScale(pattern, variation, major) {
         if(!pattern || isPlaying) {
             return;
         }
         setIsPlaying(true)
         const keys = Array.from(document.querySelectorAll('.set div'));
-        const start = mapVariationToStart(variation)
+        const start = mapVariationToStart(variation) + parseInt(major)
         playKey(keys[start])
         const backwards = [keys[start]]
         let prevSum = start;
