@@ -105,6 +105,7 @@ div .key-text {
   transform: translateX(50%);
   color: #555;
   font-weight: 500;
+  user-select: none;
   text-transform: uppercase;
 }
 
