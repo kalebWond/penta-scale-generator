@@ -85,14 +85,13 @@ export const playSoundByKeyboard = (e) => {
 export const playSound = (e) => {
     const audio = document.querySelector('audio')
     // reset the audio src tag
-    audio.src = "assets/sounds/";
     const newAudio = audio.cloneNode()
     const { key } = e.target.dataset;
     if (!key) {
         return;
     }
     e.target.classList.add(`${e.target.classList[0]}-active`)
-    newAudio.src = `${newAudio.src}${key}.ogg`;
+    newAudio.src = `assets/sounds/${key}.ogg`;
     newAudio.currentTime = 0;
     newAudio.play();
 }
@@ -107,14 +106,13 @@ export const playKey = (note) => {
     }
     const audio = document.querySelector('audio')
     // reset the audio src tag
-    audio.src = "assets/sounds/";
     const newAudio = audio.cloneNode()
     const { key } = note.dataset;
     if (!key) {
         return;
     }
     note.classList.add(`${note.classList[0]}-active`)
-    newAudio.src = `${newAudio.src}${key}.ogg`;
+    newAudio.src = `assets/sounds/${key}.ogg`;
     newAudio.currentTime = 0;
     newAudio.play();
 }
