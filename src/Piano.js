@@ -106,7 +106,6 @@ function Piano() {
                 <div className="white" data-key="C5" data-code="66">
                     {showKeys && <span className="key-text">b</span>}
                 </div>
-                {/* <audio></audio> */}
             </ul>
             <Controls getControlData={getControlData} />
             { touchedKeys.length > 0 && <KeyPrint notes={touchedKeys} pattern={formula} /> }
