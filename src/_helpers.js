@@ -1,3 +1,5 @@
+import * as files from './file-index'
+
 export const scales = [
     { value: 'TIZITA-1', label: 'Tizita major' },
     { value: 'TIZITA-2', label: 'Tizita minor' },
@@ -71,29 +73,24 @@ export const playSoundByKeyboard = (e) => {
     if (!note) {
         return;
     }
-    const audio = document.querySelector('audio')
-    // reset the audio src tag
-    audio.src = "assets/sounds/";
-    const newAudio = audio.cloneNode()
+    const audio = new Audio('')
     note.classList.add(`${note.classList[0]}-active`)
     const { key } = note.dataset;
-    newAudio.src = `${newAudio.src}${key}.ogg`;
-    newAudio.currentTime = 0;
-    newAudio.play();
+    audio.src = files[key];
+    audio.currentTime = 0;
+    audio.play();
 }
 
 export const playSound = (e) => {
-    const audio = document.querySelector('audio')
-    // reset the audio src tag
-    const newAudio = audio.cloneNode()
+    const audio = new Audio('')
     const { key } = e.target.dataset;
     if (!key) {
         return;
     }
     e.target.classList.add(`${e.target.classList[0]}-active`)
-    newAudio.src = `assets/sounds/${key}.ogg`;
-    newAudio.currentTime = 0;
-    newAudio.play();
+    audio.src = files[key];
+    audio.currentTime = 0;
+    audio.play();
 }
 
 export const sleep = (ms) => {
@@ -104,17 +101,15 @@ export const playKey = (note) => {
     if(!note) {
         return;
     }
-    const audio = document.querySelector('audio')
-    // reset the audio src tag
-    const newAudio = audio.cloneNode()
+    const audio = new Audio('');
     const { key } = note.dataset;
     if (!key) {
         return;
     }
     note.classList.add(`${note.classList[0]}-active`)
-    newAudio.src = `assets/sounds/${key}.ogg`;
-    newAudio.currentTime = 0;
-    newAudio.play();
+    audio.src = files[key];
+    audio.currentTime = 0;
+    audio.play();
 }
 
 export const mapVariationToStart = (variation) => {
