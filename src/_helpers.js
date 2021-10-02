@@ -8,15 +8,17 @@ export function loadSounds() {
     return new Promise(async (resolve, reject) => {
         for (const [key, value] of Object.entries(files)) {
             try {
-                const res = await fetch(value)
-                const result = await res.body.getReader().read();
-                const blob = new Blob([result.value], { type: 'audio/*' });
-                const url = window.URL.createObjectURL(blob)
-                data[key] = url;
-                if (Object.keys(data).length === Object.keys(files).length) {
-                    sounds = data;
-                    resolve(true)
-                }
+                fetch(value)
+                    .then(async (res) => {
+                        const result = await res.body.getReader().read();
+                        const blob = new Blob([result.value], { type: 'audio/*' });
+                        const url = window.URL.createObjectURL(blob)
+                        data[key] = url;
+                        if (Object.keys(data).length === Object.keys(files).length) {
+                            sounds = data;
+                            resolve(true)
+                        }
+                    }).catch(e => reject(e))
             } catch (e) {
                 reject("Sound loading failed");
             }
