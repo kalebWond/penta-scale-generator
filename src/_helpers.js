@@ -11,7 +11,7 @@ export function loadSounds() {
                 fetch(value)
                     .then(async (res) => {
                         const result = await res.body.getReader().read();
-                        const blob = new Blob([result.value], { type: 'audio/*' });
+                        const blob = new Blob([result.value], { type: 'audio/mp3' });
                         const url = window.URL.createObjectURL(blob)
                         data[key] = url;
                         if (Object.keys(data).length === Object.keys(files).length) {
