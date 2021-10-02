@@ -1,5 +1,29 @@
 import * as files from './file-index'
 
+let sounds = {}
+
+export function loadSounds() {
+    const data = {};
+    
+    return new Promise(async (resolve, reject) => {
+        for (const [key, value] of Object.entries(files)) {
+            try {
+                const res = await fetch(value)
+                const result = await res.body.getReader().read();
+                const blob = new Blob([result.value], { type: 'audio/*' });
+                const url = window.URL.createObjectURL(blob)
+                data[key] = url;
+                if (Object.keys(data).length === Object.keys(files).length) {
+                    sounds = data;
+                    resolve(true)
+                }
+            } catch (e) {
+                reject("Sound loading failed");
+            }
+        }
+    })
+}
+
 export const scales = [
     { value: 'TIZITA-1', label: 'Tizita major' },
     { value: 'TIZITA-2', label: 'Tizita minor' },
@@ -76,7 +100,7 @@ export const playSoundByKeyboard = (e) => {
     const audio = new Audio('')
     note.classList.add(`${note.classList[0]}-active`)
     const { key } = note.dataset;
-    audio.src = files[key];
+    audio.src = sounds[key];
     audio.currentTime = 0;
     audio.play();
 }
@@ -88,7 +112,7 @@ export const playSound = (e) => {
         return;
     }
     e.target.classList.add(`${e.target.classList[0]}-active`)
-    audio.src = files[key];
+    audio.src = sounds[key];
     audio.currentTime = 0;
     audio.play();
 }
@@ -107,7 +131,7 @@ export const playKey = (note) => {
         return;
     }
     note.classList.add(`${note.classList[0]}-active`)
-    audio.src = files[key];
+    audio.src = sounds[key];
     audio.currentTime = 0;
     audio.play();
 }

@@ -13,7 +13,7 @@ function Similarity({playPattern}) {
             Object.entries(rows).forEach(([key, value]) => {
                 scs.push(value);
                 key = key.slice(1, -1).split(',').join('Tone,  ').concat('Tone');
-                pats.push(key); 
+                pats.push(key);
             })
             setPatterns(pats); setScales(scs)
         }
