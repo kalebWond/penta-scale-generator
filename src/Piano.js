@@ -1,25 +1,28 @@
 import Controls from './Controls';
 import { useLayoutEffect, useState } from 'react'
-import { getScalePattern, removeTransition, playSoundByKeyboard, playSound, mapVariationToStart, getKeysTobePlayed, playScaleForward, playScaleBackward } from './_helpers';
+import { getScalePattern, removeTransition, removeMouseEffect, removePressedEffect, playSoundByKeyboard, playSound, mapVariationToStart, getKeysTobePlayed, playScaleForward, playScaleBackward } from './_helpers';
 import KeyPrint from './KeyPrint';
 import Similarity from './Similarity';
 import Footer from './Footer';
+import SpeedControl from './SpeedControl';
 
 function Piano() {
     const [showKeys, setShowKeys] = useState(true);
     const [isPlaying, setIsPlaying] = useState(false)
     const [touchedKeys, setTouchedKeys] = useState([])
     const [formula, setFormula] = useState()
+    const [rate, setRate] = useState(1)
 
     useLayoutEffect(() => {
         document.addEventListener('keydown', playSoundByKeyboard)
+        document.addEventListener('keyup', removePressedEffect)
         const keys = Array.from(document.querySelectorAll('.set div'))
 
         keys.forEach(key => key.addEventListener('mousedown', playSound))
-        keys.forEach(key => key.addEventListener('transitionend', removeTransition));
+        keys.forEach(key => key.addEventListener('mouseup', removeMouseEffect));
         return () => {
             keys.forEach(key => key.removeEventListener('mousedown', playSound))
-            keys.forEach(key => key.removeEventListener('transitionend', removeTransition));
+            keys.forEach(key => key.removeEventListener('mouseup', removeMouseEffect));
         }
     }, [])
     return (
@@ -106,6 +109,11 @@ function Piano() {
                 <div className="white" data-key="C5" data-code="66">
                     {showKeys && <span className="key-text">b</span>}
                 </div>
+                { formula && <>
+                    <SpeedControl onRateChange={speedHandler} />
+                    <div className="line line-1"></div>
+                    <div className="line line-2"></div>
+                </> }
             </ul>
             <Controls getControlData={getControlData} />
             { touchedKeys.length > 0 && <KeyPrint notes={touchedKeys} pattern={formula} /> }
@@ -113,6 +121,10 @@ function Piano() {
             <Footer />
         </>
     );
+
+    function speedHandler(n) {
+        setRate(n)
+    }
 
     function getControlData(data) {
         const pattern = getScalePattern(data);
@@ -133,13 +145,18 @@ function Piano() {
         const start = mapVariationToStart(variation) + parseInt(major);
         // GET KEYS
         keys = getKeysTobePlayed(keys, pattern, start)
+        keys.forEach(key => key.addEventListener('transitionend', removeTransition))
         // DISPLAY KEYS
         setTouchedKeys(keys)
         // PLAY FORWARD
-        await playScaleForward(keys)
+        await playScaleForward(keys, rate)
         // PLAY BACKWARD
-        await playScaleBackward(keys)
+        await playScaleBackward(keys, rate)
+        
         setIsPlaying(false)
+        setTimeout(() => {
+            keys.forEach(key => key.removeEventListener('transitionend', removeTransition))
+        }, 120);
     }
 }
 

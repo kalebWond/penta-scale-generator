@@ -91,6 +91,12 @@ export const removeTransition = (e) => {
     e.target.classList.remove(`${e.target.classList[0]}-active`)
 }
 
+export const removePressedEffect = (e) => {
+    const note = document.querySelector(`div[data-code="${e.keyCode}"]`);
+    if(!note) return;
+    note.classList.remove(`${note.classList[0]}-active`)
+}
+
 export const playSoundByKeyboard = (e) => {
     if (e.repeat) {
         return;
@@ -104,7 +110,13 @@ export const playSoundByKeyboard = (e) => {
     const { key } = note.dataset;
     audio.src = sounds[key];
     audio.currentTime = 0;
+    audio.volume = 0.5
     audio.play();
+}
+
+export const removeMouseEffect = ({target}) => {
+    if(!target) return;
+    target.classList.remove(`${target.classList[0]}-active`)
 }
 
 export const playSound = (e) => {
@@ -116,6 +128,7 @@ export const playSound = (e) => {
     e.target.classList.add(`${e.target.classList[0]}-active`)
     audio.src = sounds[key];
     audio.currentTime = 0;
+    audio.volume = 0.5
     audio.play();
 }
 
@@ -135,6 +148,7 @@ export const playKey = (note) => {
     note.classList.add(`${note.classList[0]}-active`)
     audio.src = sounds[key];
     audio.currentTime = 0;
+    audio.volume = 0.5
     audio.play();
 }
 
@@ -157,28 +171,28 @@ export const getKeysTobePlayed = (notes, pattern, startIndex) => {
     return keys;
 }
 
-export const playScaleForward = async (keys) => {
+export const playScaleForward = async (keys, rate=1) => {
     if(!keys || keys.length === 0) {
         return null;
     }
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
         if(i === 2) {
-            await sleep(400)
+            await sleep(350*rate)
         } else if(i === 3) {
-            await sleep(800)
+            await sleep(800*rate)
         } else if(i === 4) {
-            await sleep(450)
+            await sleep(450*rate)
         } else if(i === 5) {
-            await sleep(600)
+            await sleep(600*rate)
         } else {
-            await sleep(300)
+            await sleep(400*rate)
         }
         playKey(key)
     }
 }
 
-export const playScaleBackward = async (keys) => {
+export const playScaleBackward = async (keys, rate=1) => {
     if(!keys || keys.length === 0) {
         return null;
     }
@@ -187,13 +201,13 @@ export const playScaleBackward = async (keys) => {
     for (let i = 0; i < newKeys.length; i++) {
         const key = newKeys[i];
         if(i === 0) {
-            await sleep(800)
+            await sleep(800*rate)
         } else if(i === 3) {
-            await sleep(600)
+            await sleep(550*rate)
         } else if(i === 5) {
-            await sleep(450)
+            await sleep(450*rate)
         } else {
-            await sleep(500)
+            await sleep(500*rate)
         }
         playKey(key)
     }

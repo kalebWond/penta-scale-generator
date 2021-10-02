@@ -54,9 +54,9 @@ ul {
   position: relative;
   justify-content: center;
   height: 18.875em;
-  width: 68em;
+  width: 70em;
   margin: 4em auto 2em;
-  padding: 3em 2em 3em 3.5em;
+  padding: 3em 0em 3em 3.5em;
   border: 1px solid #160801;
   border-radius: 1em;
   background: linear-gradient(
@@ -269,6 +269,64 @@ label {
 .item .name--small {
   font-weight: 400;
   color: #555
+}
+
+.speed {
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0 10px;
+  margin-left: 10px;
+  transition: transform .35s;
+}
+
+.speed-control {
+  width: 100%;
+  text-align: center;
+  padding: 8px 0;
+  font-weight: 500;
+  color: gray;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .3s;
+}
+
+.speed-control-active {
+  font-size: 20px;
+  color: white;
+  font-weight: 600;
+}
+
+.speed-slow {
+  transform: translateY(32px);
+}
+
+.speed-normal {
+  transform: translateY(0);
+}
+
+.speed-fast {
+  transform: translateY(-32px);
+}
+
+.line {
+  position: absolute;
+  width: 55px;
+  right: 16px;
+  text-align: center;
+  cursor: pointer;
+  border-top: 2px solid white;
+}
+
+.line-1 {
+  top: 45%;
+}
+
+.line-2 {
+  top: 55%;
 }
 
 .spinner {
