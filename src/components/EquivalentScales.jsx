@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { notes } from '../music/notes'
 import { findEquivalentScales, formatStep } from '../music/scales'
+import { PlayIcon } from './icons'
 
 // The same interval pattern shows up under different names depending on where you start,
 // e.g. Tizita major from the 6th is Bati minor from the 1st. Tapping an entry loads it
@@ -27,7 +28,7 @@ function EquivalentScales({ startPc, onSelect, onClose }) {
                                 {group.entries.map(entry => (
                                     <li key={entry.scaleId + entry.degree}>
                                         <button type="button" className="card__row" onClick={() => onSelect(entry)}>
-                                            <span className="card__play" aria-hidden="true">▶</span>
+                                            <span className="card__play"><PlayIcon /></span>
                                             <span>{entry.scaleLabel}</span>
                                             <span className="card__deg">{entry.degreeLabel}</span>
                                         </button>

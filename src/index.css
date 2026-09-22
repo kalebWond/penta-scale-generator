@@ -1,8 +1,11 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  /* Shipped rather than borrowed from the OS, so the app looks the same everywhere
+     instead of Ubuntu here, Roboto there and San Francisco on a phone. --font-ui is
+     defined with the other tokens in App.css; the literals are the escape hatch if
+     that sheet ever fails to load. 'Noto Music' carries the ♭ (U+266D) no text face
+     includes -- fallback is per glyph, so only that one character drops through. */
+  font-family: var(--font-ui, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
