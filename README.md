@@ -1,70 +1,130 @@
-# Getting Started with Create React App
+# 🎹 PentaScales
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**An interactive piano for learning the Ethiopian pentatonic scales — and hearing how they turn into one another.**
 
-## Available Scripts
+![The PentaScales piano, showing Tizita major starting from its 6th](docs/screenshot.png)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 💡 The idea
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Ethiopian music is built on a handful of pentatonic modes — *qeñet* — with names like **Tizita**, **Bati**, **Ambasel** and **Anchi hoye lene**. Each is five notes, and each carries its own character. *Tizita* means nostalgia, and the scale named after it is the one you'll recognise from a hundred Ethiopian songs.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Here's the part that makes them fun to study: **start the same five notes from a different place and you get a different mode entirely.**
 
-### `npm test`
+Play Tizita major from C and you get `C D E G A`. Start those same notes from the 6th — from A — and you're playing `A C D E G A`, which is **Bati minor**. Same keys. Same pattern. Different name, different feeling.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+PentaScales lets you hear that. Pick a root, pick a scale, pick where to start, and press Play.
 
-### `npm run build`
+## 🔄 Same pattern, different name
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The **Similar scales** drawer computes every one of these overlaps for you. It rotates all 7 scales through all 4 starting positions, groups them by their interval pattern, and shows you which ones collide.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+![The Similar scales drawer, listing scales that share an interval pattern](docs/similar-scales.png)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Tap any row and it loads that scale onto the note you're already sitting on — so you can hear, back to back, that two differently-named scales are the same handful of notes.
 
-### `npm run eject`
+## ✨ What's in it
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+| | |
+|---|---|
+| 🎼 **7 scales** | Tizita, Ambasel and Bati in major and minor, plus Anchi hoye lene |
+| 🔑 **All 12 roots** | transpose any scale to any key |
+| 🔄 **4 starting positions** | 1st, 2nd, 5th and 6th |
+| 🎹 **Real piano samples** | two octaves, C3–C5 |
+| 👆 **Playable** | mouse, multi-touch chords, glissando, or your computer keyboard |
+| ▶️ **Scale runs** | plays up and back down, at three speeds |
+| 📱 **Built for phones** | landscape-first, no scrolling, no zooming |
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### ⌨️ Playing from the computer keyboard
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+white keys   Q W E R T Y U   I O P Z X C V   B
+black keys    2 3   5 6 7     9 0   S D F
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Hold several at once for chords. Click and drag across the keys for a glissando.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🛠️ Under the hood
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 🔢 The music is just integers
 
-### Code Splitting
+Every scale is five semitone steps. That's the whole model:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```js
+{ id: 'TIZITA-1', label: 'Tizita major', steps: [2, 2, 3, 2, 3] }
+{ id: 'BATI-2',   label: 'Bati minor',   steps: [3, 2, 2, 3, 2] }
+```
 
-### Analyzing the Bundle Size
+Starting from a different position is a **rotation** of that array — which is exactly why the equivalences fall out for free. Rotate Tizita major by four and you get `[3, 2, 2, 3, 2]`, which *is* Bati minor.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+`src/music/` knows nothing about React and nothing about audio. It's pure functions over integers, which is why the test suite runs in about a second with no DOM and no sound card.
 
-### Making a Progressive Web App
+One subtlety worth knowing: the start positions are labelled **1st, 2nd, 5th, 6th** — these are *diatonic* degree names read off the major pentatonic frame (Tizita major is `C D E G A`, so G is the 5th and A the 6th). The label names the position, not the index, and it stays with that position across every scale.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 🔊 Sound: decode once, schedule precisely
 
-### Advanced Configuration
+The 25 samples are fetched and decoded into Web Audio `AudioBuffer`s once at startup, so pressing a key costs nothing but wiring up a buffer source. Notes get a short attack and a gentle release, a retriggered note fades under its replacement, and everything runs through a compressor so chords and fast runs don't clip.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Scale runs are **scheduled on the audio clock**, not with `setTimeout`:
 
-### Deployment
+```js
+const t0 = getContext().currentTime + LEAD
+events.forEach(({ step, time }) => {
+    noteOn(notes[keys[step]].name, t0 + time)   // sample-accurate
+    later(() => highlight(step), LEAD + time)   // visual, best-effort
+})
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Timing is therefore immune to whatever the main thread is doing. If the browser stutters, the highlight lags — the music doesn't.
 
-### `npm run build` fails to minify
+Samples load in parallel with the UI, middle octave first, and each key lights up as its sample becomes playable. A file that fails to load is reported and skipped rather than blocking the rest.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### 👆 Input
+
+The keyboard has **one** set of pointer handlers on the container, not two per key. It hit-tests with `elementFromPoint` and tracks a `Map` of `pointerId → note`, which is what gives you multi-touch chords and glissando without any extra machinery. The computer keyboard is a single `keydown`/`keyup` pair on `window`, keyed by `KeyboardEvent.code`.
+
+### 📱 Landscape on a phone
+
+A 25-key piano wants to be wide, so the app asks for landscape on the opening tap — fullscreen plus `screen.orientation.lock()` where the browser allows it, a web-app manifest for installed use, and a CSS fallback that rotates the whole interface 90° for browsers (iOS Safari) that can't lock at all. That same tap is what unlocks the `AudioContext`.
+
+The keyboard is sized from its own height at a fixed aspect ratio rather than stretched to fill the viewport, so the keys keep piano proportions on any screen, with the case showing either side as cheek blocks. Key labels scale with container query units.
+
+---
+
+## 🚀 Running it
+
+```bash
+npm install
+npm run dev        # dev server on http://localhost:3000
+npm test           # 20 tests across 3 suites
+npm run build      # production bundle into build/
+npm run preview    # serve that bundle locally
+```
+
+The dev server also binds to your LAN address, so you can open it on a phone on the same network — handy, since the landscape and touch behaviour are the parts you can't check on a desktop.
+
+Built with **Vite**, tested with **Vitest**. The only runtime dependency is React itself — the whole bundle is about **48 kB of JavaScript and 3.5 kB of CSS**, gzipped.
+
+Needs a reasonably current browser: Web Audio, Pointer Events and CSS container queries.
+
+## 📁 Project layout
+
+```
+src/
+  music/        scale and note theory — pure, tested, no dependencies
+  audio/        Web Audio engine: sample loading, voices, scheduling
+  hooks/        scale playback, computer-keyboard input
+  components/   Keyboard, Toolbar, ScaleReadout, EquivalentScales, StartGate
+  lib/          orientation and fullscreen helpers
+  sounds/       25 piano samples, C3–C5
+
+index.html      the entry point Vite serves
+vite.config.js  build, dev server and test config
+```
+
+---
+
+Programmed by **Kaleb Wondwossen Tsegaye** 🇪🇹
