@@ -2,6 +2,8 @@
 
 **An interactive piano for learning the Ethiopian pentatonic scales — and hearing how they turn into one another.**
 
+▶️ **Try it live: [penta-scale.netlify.app](https://penta-scale.netlify.app/)**
+
 ![The PentaScales piano, showing Tizita major starting from its 6th](docs/screenshot.png)
 
 ---
@@ -124,6 +126,10 @@ src/
 index.html      the entry point Vite serves
 vite.config.js  build, dev server and test config
 ```
+
+## 🎧 Audio samples
+
+The piano samples in `src/sounds/` were collected in 2021 and their original source wasn't recorded, so their license can't be confirmed. If you recognise them as your work, please open an issue: they'll be credited or replaced.
 
 ---
 
