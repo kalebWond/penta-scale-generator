@@ -1,5 +1,6 @@
 import { ROOTS } from '../music/notes'
 import { DEGREES, SCALES } from '../music/scales'
+import { PlayIcon, StopIcon } from './icons'
 
 export const SPEEDS = [
     { value: 0.75, label: '0.75×' },
@@ -54,7 +55,7 @@ function Toolbar({
 
             <button type="button" className={`btn ${playing ? 'btn--stop' : 'btn--play'}`}
                 onClick={playing ? onStop : onPlay}>
-                {playing ? '■ Stop' : '▶ Play'}
+                {playing ? <><StopIcon /> Stop</> : <><PlayIcon /> Play</>}
             </button>
 
             <div className="field">

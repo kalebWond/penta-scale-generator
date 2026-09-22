@@ -13,6 +13,28 @@
   --felt: #7d211a;
   --radius: 10px;
   --gap: 8px;
+
+  /* The wordmark and the note chips. Swapping the face means editing these three lines
+     and the import in index.jsx -- nothing else names the family.
+     Weight and style are tokens rather than fixed, because neither candidate has an
+     italic and only one has a bold: Cinzel is variable and takes a real 700, while
+     Limelight ships a single upright 400 and would have to synthesise anything else.
+     Either way the 700 italic .brand used to carry is gone.
+     'Noto Music' sits behind the display face to catch the ♭, which no text face
+     includes -- fallback is per glyph, so the letters still come from the display
+     face and only U+266D drops through. */
+  --font-display: 'Cinzel Variable', 'Noto Music', serif;
+  --font-display-weight: 700;
+  --font-display-style: normal;
+
+  /* Text and the computer-key labels. Source Sans 3 and Source Code Pro are one
+     superfamily, drawn to sit together, and both hold up at the sizes this app asks
+     for -- 10px uppercase field labels and key labels that bottom out around 7px.
+     'Noto Music' trails each stack for the same reason it trails the display one, and
+     must sit ahead of the generics: sans-serif matches every character, so anything
+     listed after it is unreachable. */
+  --font-ui: 'Source Sans 3 Variable', 'Noto Music', system-ui, sans-serif;
+  --font-mono: 'Source Code Pro Variable', 'Noto Music', ui-monospace, monospace;
   --pad-x: clamp(14px, 4vw, 56px);   /* table showing to the left and right of the instrument */
 
   /* Width of the keyboard per unit of its height. Real 25-key keyboards are about 2.35;
@@ -130,8 +152,10 @@ button {
   align-self: center;
   padding: 3px 10px;
   font-size: 0.95rem;
-  font-weight: 700;
-  font-style: italic;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: var(--font-display-style);
+  letter-spacing: 0.02em;   /* display faces set tight; a little air suits the small plate */
   white-space: nowrap;
   border: 1px solid rgba(242, 181, 68, 0.3);
   border-radius: 6px;
@@ -221,6 +245,10 @@ select {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;             /* sets the space between a drawn icon and its label */
   height: 38px;
   padding: 0 16px;
   font-weight: 700;
@@ -324,7 +352,9 @@ select {
   min-width: 44px;
   padding: 4px 8px;
   text-align: center;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: var(--font-display-style);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -452,7 +482,7 @@ select {
 .key__kbd {
   font-size: 10px;
   font-size: clamp(7px, 5.5cqh, 15px);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   text-transform: uppercase;
   color: #9a8a74;
   line-height: 1;
@@ -586,8 +616,19 @@ select {
 }
 
 .card__play {
+  display: inline-flex;
   color: var(--gold);
   font-size: 0.8rem;
+}
+
+/* Drawn icons stand in for the ▶ and ■ characters -- see components/icons.jsx.
+   Sized in em so they track the label's font-size, and filled with currentColor so
+   they follow the button through its hover, pressed and disabled states. */
+.icon {
+  width: 0.8em;
+  height: 0.8em;
+  fill: currentColor;
+  flex: none;
 }
 
 .card__deg {
