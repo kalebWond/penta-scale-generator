@@ -1,9 +1,12 @@
 import { Fragment } from 'react'
 import { notes } from '../music/notes'
 import { formatStep, getScale, DEGREES } from '../music/scales'
+import { SustainIcon } from './icons'
 
 // The notes of the selected run with the steps between them; lights up as the run plays.
-function ScaleReadout({ scaleId, degree, run, step, showLabels, onToggleLabels, onOpenEquivalents }) {
+function ScaleReadout({
+    scaleId, degree, run, step, showLabels, onToggleLabels, sustain, onToggleSustain, onOpenEquivalents,
+}) {
     const scale = getScale(scaleId)
     const degreeLabel = DEGREES.find(d => d.value === degree).label
     const start = notes[run.keys[0]]
@@ -17,6 +20,10 @@ function ScaleReadout({ scaleId, degree, run, step, showLabels, onToggleLabels, 
                 <button type="button" className="btn btn--ghost" aria-pressed={showLabels}
                     onClick={onToggleLabels} title="Show the computer key on each piano key">
                     Key labels
+                </button>
+                <button type="button" className="btn btn--ghost" aria-pressed={sustain}
+                    onClick={onToggleSustain} title="Let notes ring after they're released, like a sustain pedal">
+                    <SustainIcon /> Sustain
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={onOpenEquivalents}
                     title="Scales that are the same pattern under another name">

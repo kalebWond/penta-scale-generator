@@ -36,6 +36,7 @@ Tap any row and it loads that scale onto the note you're already sitting on — 
 | 🎹 **Real piano samples** | two octaves, C3–C5 |
 | 👆 **Playable** | mouse, multi-touch chords, glissando, or your computer keyboard |
 | ▶️ **Scale runs** | plays up and back down, at three speeds |
+| 🦶 **Sustain** | a pedal toggle: notes ring on after release, for your playing and the runs |
 | 📱 **Built for phones** | landscape-first, no scrolling, no zooming |
 
 ### ⌨️ Playing from the computer keyboard
@@ -101,7 +102,7 @@ The keyboard is sized from its own height at a fixed aspect ratio rather than st
 ```bash
 npm install
 npm run dev        # dev server on http://localhost:3000
-npm test           # 20 tests across 3 suites
+npm test           # 21 tests across 3 suites
 npm run build      # production bundle into build/
 npm run preview    # serve that bundle locally
 ```

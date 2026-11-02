@@ -14,6 +14,13 @@ describe('buildSchedule', () => {
         expect(events[6].time - events[5].time).toBeCloseTo(0.8)
     })
 
+    test('each note is damped as the next one starts, and the last after a hold', () => {
+        const events = buildSchedule(6)
+        events.slice(0, -1).forEach((e, i) => expect(e.end).toBe(events[i + 1].time))
+        expect(events[11].end).toBeCloseTo(events[11].time + 0.8)
+        expect(buildSchedule(6, 2)[11].end).toBeCloseTo(buildSchedule(6, 2)[11].time + 0.4)
+    })
+
     test('speed scales every gap', () => {
         const slow = buildSchedule(6, 0.5)
         const normal = buildSchedule(6, 1)

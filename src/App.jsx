@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import Keyboard from './components/Keyboard'
 import Toolbar from './components/Toolbar'
@@ -25,6 +25,7 @@ function App() {
     const [degree, setDegree] = useState(0)
     const [speed, setSpeed] = useState(1)
     const [showLabels, setShowLabels] = useState(() => !isTouchDevice())
+    const [sustain, setSustain] = useState(false)
     const [sheetOpen, setSheetOpen] = useState(false)
 
     const [started, setStarted] = useState(false)
@@ -49,8 +50,13 @@ function App() {
         noteOn(notes[index].name)
         setPressed(s => withItem(s, index))
     }, [])
+    // With sustain on, a released key keeps ringing (like holding the pedal) until sustain is turned off.
+    const sustainRef = useRef(sustain)
+    sustainRef.current = sustain
+    const ringing = useRef(new Set())   // keys let go while sustain was on
     const release = useCallback((index) => {
-        noteOff(notes[index].name)
+        if (sustainRef.current) ringing.current.add(index)
+        else noteOff(notes[index].name)
         setPressed(s => withoutItem(s, index))
     }, [])
     useKeyboardInput(started, press, release)
@@ -81,6 +87,17 @@ function App() {
     // Changing what's selected ends any run that's still playing.
     const change = (setter) => (value) => { player.stop(); setter(value) }
 
+    // Lifting the pedal damps what it was holding, except keys that are still held down.
+    // A playing run was scheduled with the old setting, so it ends here too.
+    function toggleSustain() {
+        if (player.playing) player.stop()
+        if (sustain) {
+            ringing.current.forEach(index => { if (!pressed.has(index)) noteOff(notes[index].name) })
+            ringing.current.clear()
+        }
+        setSustain(!sustain)
+    }
+
     function selectEquivalent(entry) {
         const scale = getScale(entry.scaleId)
         const startPc = run.keys[0] % 12
@@ -89,7 +106,7 @@ function App() {
         setDegree(entry.degree)
         setRootPc(root)
         setSheetOpen(false)
-        player.play(getScaleRun(entry.scaleId, entry.degree, root).keys, speed)
+        player.play(getScaleRun(entry.scaleId, entry.degree, root).keys, speed, sustain)
     }
 
     return (
@@ -101,9 +118,10 @@ function App() {
                         scaleId={scaleId} onScale={change(setScaleId)}
                         degree={degree} onDegree={change(setDegree)}
                         speed={speed} onSpeed={setSpeed}
-                        playing={player.playing} onPlay={() => player.play(run.keys, speed)} onStop={player.stop} />
+                        playing={player.playing} onPlay={() => player.play(run.keys, speed, sustain)} onStop={player.stop} />
                     <ScaleReadout scaleId={scaleId} degree={degree} run={run} step={step}
                         showLabels={showLabels} onToggleLabels={() => setShowLabels(v => !v)}
+                        sustain={sustain} onToggleSustain={toggleSustain}
                         onOpenEquivalents={() => setSheetOpen(true)} />
                 </div>
                 <div className="piano__bed">

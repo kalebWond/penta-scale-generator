@@ -11,6 +11,16 @@ export function PlayIcon() {
     )
 }
 
+// A piano pedal seen from above: the rod it hangs from, and the foot plate flaring out below.
+export function SustainIcon() {
+    return (
+        <svg className="icon" viewBox="0 0 12 14" aria-hidden="true" focusable="false">
+            <rect x="5" y="0.5" width="2" height="5.5" rx="0.6" />
+            <path d="M3.6 6.5h4.8l2.1 5.4a1.1 1.1 0 0 1-1 1.6H2.5a1.1 1.1 0 0 1-1-1.6z" />
+        </svg>
+    )
+}
+
 export function StopIcon() {
     return (
         <svg className="icon" viewBox="0 0 12 14" aria-hidden="true" focusable="false">

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getContext, noteOn, stopAll } from '../audio/engine'
+import { getContext, noteOff, noteOn, stopAll } from '../audio/engine'
 import { notes } from '../music/notes'
 
 // Hand-tuned pauses (ms) *before* note i, going up and coming back down.
@@ -10,8 +10,10 @@ const DOWN_GAPS = [800, 500, 500, 550, 500, 450]
 const LEAD = 0.06        // s between pressing play and the first note, so scheduling is never late
 const FLASH = 0.22       // s a key stays lit after it sounds
 const TAIL = 1.2         // s the last note is allowed to ring before we call the run finished
+const LAST_HOLD = 0.8    // s the last note is held before it's damped, when sustain is off
 
-// Note times (seconds from the first note) and which step of the run each one is.
+// Note times (seconds from the first note), which step of the run each one is, and `end`:
+// when it's damped if sustain is off -- as the next note starts, so the run stays legato.
 export function buildSchedule(count, speed = 1) {
     const events = []
     let t = 0
@@ -23,6 +25,9 @@ export function buildSchedule(count, speed = 1) {
         t += DOWN_GAPS[j] / 1000 / speed
         events.push({ step: count - 1 - j, time: t })
     }
+    events.forEach((e, i) => {
+        e.end = i + 1 < events.length ? events[i + 1].time : e.time + LAST_HOLD / speed
+    })
     return events
 }
 
@@ -47,7 +52,8 @@ export function useScalePlayer(onNote) {
         onNoteRef.current(null, null, false)
     }, [])
 
-    const play = useCallback((keys, speed = 1) => {
+    // With `sustain` every note rings out, like holding the pedal; without it each is damped at its `end`.
+    const play = useCallback((keys, speed = 1, sustain = false) => {
         if (!keys || keys.length === 0) return
         clearTimers()
         stopAll()
@@ -55,9 +61,10 @@ export function useScalePlayer(onNote) {
         const events = buildSchedule(keys.length, speed)
         const later = (fn, seconds) => timers.current.push(setTimeout(fn, seconds * 1000))
 
-        events.forEach(({ step, time }) => {
+        events.forEach(({ step, time, end }) => {
             const key = keys[step]
             noteOn(notes[key].name, t0 + time)
+            if (!sustain) noteOff(notes[key].name, t0 + end)   // targets the voice just scheduled
             later(() => onNoteRef.current(key, step, true), LEAD + time)
             later(() => onNoteRef.current(key, step, false), LEAD + time + FLASH)
         })
