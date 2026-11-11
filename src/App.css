@@ -305,10 +305,122 @@ select {
   font-size: 0.85rem;
 }
 
-.seg--mode button {
-  min-width: 0;
-  padding: 0 12px;
-  font-weight: 600;
+/* ---------- home: the launcher, and the way back to it ---------- */
+
+/* Inside a feature the brand plate is the home button: same plate, with a back arrow. */
+.brand--home {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.brand--home:hover {
+  border-color: var(--gold);
+  background: rgba(242, 181, 68, 0.12);
+}
+
+.brand--home .icon {
+  color: var(--gold);
+}
+
+.icon--line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 860px;
+  margin: auto;                 /* centred on the table, like the piano */
+  text-align: center;
+}
+
+.home__tag {
+  margin: 0 0 6px;
+  color: #d8c6ad;
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+/* Each card is a small lacquered panel, the same finish as the piano case. */
+.home__card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 18px 14px 16px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background:
+    linear-gradient(105deg, transparent 18%, rgba(255, 255, 255, 0.045) 38%, transparent 52%),
+    linear-gradient(#3c3c40, #1a1a1d 14%, #0e0e10 52%, #060607);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 3px rgba(0, 0, 0, 0.5),
+    0 16px 30px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s, border-color 0.15s;
+}
+
+.home__card:hover {
+  border-color: rgba(242, 181, 68, 0.6);
+}
+
+.home__card:active {
+  transform: translateY(1px);
+}
+
+.home__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(242, 181, 68, 0.35);
+  border-radius: 50%;
+  background: rgba(242, 181, 68, 0.08);
+  color: var(--gold);
+}
+
+.feature-icon {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home__label {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: var(--font-display-style);
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+
+.home__desc {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.home .gate__status {
+  color: #c9b8a2;
 }
 
 /* ---------- quiz ---------- */
@@ -1098,7 +1210,8 @@ select {
     padding: 0 6px;
   }
 
-  .toolbar .brand,
+  /* the home button keeps just its arrow */
+  .brand--home__name,
   .readout__title {
     display: none;
   }
@@ -1170,26 +1283,48 @@ select {
   .lane__now {
     font-size: clamp(1.6rem, 12vh, 2.6rem);
   }
+
+  .home {
+    gap: 6px;
+  }
+
+  .home__tag {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .home__cards {
+    gap: 10px;
+  }
+
+  .home__card {
+    gap: 4px;
+    padding: 10px 10px 12px;
+  }
+
+  .home__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .feature-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .home__label {
+    font-size: 1.05rem;
+  }
+
+  .home__desc {
+    font-size: 0.78rem;
+  }
 }
 
 /* ---------- small phones in landscape (iPhone SE: 667px): one toolbar row, not two ----------
-   The mode switch shows only the mode you'd switch *to*, as a single button, and the rest
-   of the row gives up a little padding. */
+   The row gives up a little padding. */
 
 @media (max-height: 520px) and (max-width: 760px) {
-  .seg--mode button.is-on {
-    display: none;
-  }
-
-  .seg--mode button {
-    border-left: 0;
-    padding: 0 8px;
-  }
-
-  .seg--mode button::after {
-    content: ' →';
-  }
-
   .toolbar {
     gap: 4px 7px;
   }

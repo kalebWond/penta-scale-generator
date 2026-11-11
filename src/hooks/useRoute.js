@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DEFAULT_FEATURE, FEATURES, getFeature } from '../features/registry'
+import { FEATURES, HOME, getFeature } from '../features/registry'
 
 // No router: one path to read and the History API to change it, so links work and the back
 // button goes back. A route is { id, param }: the feature, and an optional path segment after
@@ -12,7 +12,7 @@ export function routeFromPath(pathname) {
     if (feature?.isParam && parts.length === 2) {
         return { id: feature.id, param: feature.isParam(parts[1]) ? parts[1] : null }
     }
-    return { id: DEFAULT_FEATURE, param: null }
+    return { id: HOME, param: null }
 }
 
 export function pathFor(id, param = null) {

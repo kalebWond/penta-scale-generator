@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
-import StartGate from './components/StartGate'
-import { ModeSwitch } from './components/Segmented'
+import Home, { HomeButton } from './components/Home'
+import StartGate, { unlockAudio } from './components/StartGate'
 import QuizFeature from './features/quiz/QuizFeature'
 import ScalesFeature from './features/scales/ScalesFeature'
 import SongsFeature from './features/songs/SongsFeature'
@@ -11,7 +11,7 @@ import { loadSamples, noteOff, noteOn } from './audio/engine'
 import { NOTE_COUNT, notes } from './music/notes'
 import { isTouchDevice } from './lib/orientation'
 
-// The component for each feature in features/registry.js.
+// The component for each feature in features/registry.js (home is drawn by the shell itself).
 const FEATURE_COMPONENTS = {
     scales: ScalesFeature,
     quiz: QuizFeature,
@@ -26,7 +26,8 @@ const withoutItem = (set, item) => {
 }
 
 // The app shell: loads the sounds, owns the instrument every feature shares (keys held, the
-// pedal, speed, labels, the home key), and shows the feature the address points to.
+// pedal, speed, labels, the home key), and shows the home screen or the feature the address
+// points to.
 function App() {
     const [route, go] = useRoute()
 
@@ -87,18 +88,28 @@ function App() {
         rootPc, setRootPc,
     }
 
+    // A card's tap starts the audio on the way in.
+    function open(id) {
+        if (!started) {
+            unlockAudio()
+            setStarted(true)
+        }
+        go(id)
+    }
+
+    const loading = { loaded: loadedCount, total: NOTE_COUNT, done: loadDone, error: loadError }
     const Feature = FEATURE_COMPONENTS[route.id]
-    const nav = (
-        <>
-            <h1 className="brand">Penta<span>Scales</span></h1>
-            <ModeSwitch mode={route.id} onMode={go} />
-        </>
-    )
 
     return (
         <div className="app">
-            <Feature key={route.id} instrument={instrument} nav={nav} param={route.param} go={go} />
-            {!started && (
+            {Feature ? (
+                <Feature key={route.id} instrument={instrument} param={route.param} go={go}
+                    nav={<HomeButton onHome={() => go('home')} />} />
+            ) : (
+                <Home {...loading} onOpen={open} />
+            )}
+            {/* A link straight into a feature had no tap on the home screen to start the audio. */}
+            {Feature && !started && (
                 <StartGate loaded={loadedCount} total={NOTE_COUNT} done={loadDone} error={loadError}
                     onStart={() => setStarted(true)} />
             )}

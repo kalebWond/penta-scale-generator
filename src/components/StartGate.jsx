@@ -2,15 +2,21 @@ import { useState } from 'react'
 import { enterLandscape } from '../lib/orientation'
 import { resume } from '../audio/engine'
 
-// Browsers only let audio (and fullscreen / orientation lock) start from a tap, so one button does all three.
+// Browsers only let audio (and fullscreen / orientation lock) start from a tap. Call this from
+// one: the gate's button, or a card on the home screen.
+export function unlockAudio() {
+    enterLandscape()             // these need the tap's user activation, so start them right away…
+    resume().catch(() => {})     // …and don't wait: if resume stalls, the next key press retries it
+}
+
+// What a link straight into a feature opens on, since there was no tap on the home screen yet.
 function StartGate({ loaded, total, done, error, onStart }) {
     const [busy, setBusy] = useState(false)
 
     function start() {
         if (busy) return
         setBusy(true)
-        enterLandscape()             // these need the tap's user activation, so start them right away…
-        resume().catch(() => {})     // …and don't wait: if resume stalls, the next key press retries it
+        unlockAudio()
         onStart()
     }
 
