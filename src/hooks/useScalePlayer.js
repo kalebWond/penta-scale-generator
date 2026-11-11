@@ -11,6 +11,7 @@ const LEAD = 0.06        // s between pressing play and the first note, so sched
 const FLASH = 0.22       // s a key stays lit after it sounds
 const TAIL = 1.2         // s the last note is allowed to ring before we call the run finished
 const LAST_HOLD = 0.8    // s the last note is held before it's damped, when sustain is off
+const BETWEEN_RUNS = 1.4 // s from the last note of one run to the first of the next, at 1x
 
 // Note times (seconds from the first note), which step of the run each one is, and `end`:
 // when it's damped if sustain is off -- as the next note starts, so the run stays legato.
@@ -52,30 +53,40 @@ export function useScalePlayer(onNote) {
         onNoteRef.current(null, null, false)
     }, [])
 
+    // Plays several runs back to back (e.g. your answer, then the right one), each a full up-and-down.
     // With `sustain` every note rings out, like holding the pedal; without it each is damped at its `end`.
-    const play = useCallback((keys, speed = 1, sustain = false) => {
-        if (!keys || keys.length === 0) return
+    const playRuns = useCallback((runs, speed = 1, sustain = false) => {
+        runs = runs.filter(keys => keys && keys.length > 0)
+        if (runs.length === 0) return
         clearTimers()
         stopAll()
         const t0 = getContext().currentTime + LEAD
-        const events = buildSchedule(keys.length, speed)
         const later = (fn, seconds) => timers.current.push(setTimeout(fn, seconds * 1000))
 
-        events.forEach(({ step, time, end }) => {
-            const key = keys[step]
-            noteOn(notes[key].name, t0 + time)
-            if (!sustain) noteOff(notes[key].name, t0 + end)   // targets the voice just scheduled
-            later(() => onNoteRef.current(key, step, true), LEAD + time)
-            later(() => onNoteRef.current(key, step, false), LEAD + time + FLASH)
+        let offset = 0      // s from t0 to the start of the current run
+        runs.forEach((keys, r) => {
+            const events = buildSchedule(keys.length, speed)
+            events.forEach(({ step, time, end }) => {
+                const key = keys[step]
+                const at = offset + time
+                noteOn(notes[key].name, t0 + at)
+                if (!sustain) noteOff(notes[key].name, t0 + offset + end)   // targets the voice just scheduled
+                later(() => onNoteRef.current(key, step, true), LEAD + at)
+                later(() => onNoteRef.current(key, step, false), LEAD + at + FLASH)
+            })
+            const last = events[events.length - 1]
+            offset += last.time + (r < runs.length - 1 ? BETWEEN_RUNS / speed : TAIL)
         })
         later(() => {
             setPlaying(false)
             onNoteRef.current(null, null, false)
-        }, LEAD + events[events.length - 1].time + TAIL)
+        }, LEAD + offset)
         setPlaying(true)
     }, [])
 
+    const play = useCallback((keys, speed, sustain) => playRuns([keys], speed, sustain), [playRuns])
+
     useEffect(() => () => { clearTimers(); stopAll() }, [])
 
-    return { playing, play, stop }
+    return { playing, play, playRuns, stop }
 }

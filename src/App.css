@@ -299,6 +299,169 @@ select {
   font-size: 1.15rem;
 }
 
+.btn--small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+}
+
+.seg--mode button {
+  min-width: 0;
+  padding: 0 12px;
+  font-weight: 600;
+}
+
+/* ---------- quiz ---------- */
+
+.quiz__score {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 0 auto;
+  align-self: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.quiz__score b {
+  color: var(--text);
+}
+
+.quiz {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-height: 39px;        /* the row doesn't jump as prompts and buttons come and go */
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quiz__prompt {
+  margin: 0;
+  font-weight: 600;
+}
+
+.quiz__prompt span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.quiz__prompt--right strong {
+  color: var(--green);
+}
+
+.quiz__prompt--wrong strong {
+  color: var(--gold);
+}
+
+.quiz__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.choice {
+  height: 34px;
+  padding: 0 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  transition: background 0.12s, opacity 0.12s;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.choice.is-right {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--green-ink);
+}
+
+.choice.is-wrong {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.choice.is-other {
+  opacity: 0.4;
+}
+
+.quiz__after {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* progress sheet */
+
+.stats {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 44px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.stats__row--mix {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.stats__row--mix span {
+  color: var(--muted);
+}
+
+.stats__row--mix b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.stats__bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: 6px;
+}
+
+.stats__bar i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+}
+
+.stats__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.stats__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.stats__reset {
+  justify-self: start;
+}
+
 /* ---------- what's selected, and the run as it plays ---------- */
 
 .readout {
@@ -680,6 +843,14 @@ select {
   overflow: hidden;
   background: var(--line);
   border-radius: 4px;
+  transition: opacity 0.3s 0.35s, height 0.25s 0.6s, margin 0.25s 0.6s;
+}
+
+/* finished: hold the full bar a moment (the fill animates to 100%), fade it, then fold its space */
+.gate__bar.is-done {
+  opacity: 0;
+  height: 0;
+  margin-top: 0;
 }
 
 .gate__bar i {
@@ -783,12 +954,60 @@ select {
     padding: 0 10px;
   }
 
-  .readout__tools .btn {
+  .readout__tools .btn, .btn--small, .choice {
     height: 30px;
+  }
+
+  .choice {
+    padding: 0 9px;
+  }
+
+  .quiz {
+    min-height: 34px;
+    padding-top: 4px;
+  }
+
+  .quiz__score {
+    gap: 8px;
+  }
+
+  .quiz__best {
+    display: none;
   }
 
   .gate__hint, .gate__credit {
     display: none;
+  }
+}
+
+/* ---------- small phones in landscape (iPhone SE: 667px): one toolbar row, not two ----------
+   The mode switch shows only the mode you'd switch *to*, as a single button, and the rest
+   of the row gives up a little padding. */
+
+@media (max-height: 520px) and (max-width: 760px) {
+  .seg--mode button.is-on {
+    display: none;
+  }
+
+  .seg--mode button {
+    border-left: 0;
+    padding: 0 8px;
+  }
+
+  .seg--mode button::after {
+    content: ' →';
+  }
+
+  .toolbar {
+    gap: 4px 7px;
+  }
+
+  .seg button {
+    min-width: 32px;
+  }
+
+  .btn--play, .btn--stop {
+    min-width: 0;
   }
 }
 

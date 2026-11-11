@@ -26,6 +26,12 @@ The **Similar scales** drawer computes every one of these overlaps for you. It r
 
 Tap any row and it loads that scale onto the note you're already sitting on — so you can hear, back to back, that two differently-named scales are the same handful of notes.
 
+## 🎧 Ear training
+
+At **[/quiz](https://penta-scale.netlify.app/quiz)** the app plays a scale and you name it. Get it wrong and the keys show you what it was, and **Hear both** plays your answer and the right one back to back from the same note.
+
+It starts easy and gets harder on its own. Difficulty is measured, not guessed: two scales are as hard to tell apart as the number of notes they differ by when played from the same start. Anchi hoye lene is the easiest to spot (it's the only one without the 5th); Tizita major and Ambasel major are the hardest (one note apart: `C D E G A` vs `C D F G A`). The levels move from two far-apart choices on a fixed note to every scale from a random note, and the scales you get wrong, and the ones you mix them up with, come up more often. Progress is saved in your browser.
+
 ## ✨ What's in it
 
 | | |
@@ -37,6 +43,7 @@ Tap any row and it loads that scale onto the note you're already sitting on — 
 | 👆 **Playable** | mouse, multi-touch chords, glissando, or your computer keyboard |
 | ▶️ **Scale runs** | plays up and back down, at three speeds |
 | 🦶 **Sustain** | a pedal toggle: notes ring on after release, for your playing and the runs |
+| 🎧 **Ear training** | name the scale you hear, with difficulty that adapts to you |
 | 📱 **Built for phones** | landscape-first, no scrolling, no zooming |
 
 ### ⌨️ Playing from the computer keyboard
@@ -66,6 +73,16 @@ Starting from a different position is a **rotation** of that array — which is 
 `src/music/` knows nothing about React and nothing about audio. It's pure functions over integers, which is why the test suite runs in about a second with no DOM and no sound card.
 
 One subtlety worth knowing: the start positions are labelled **1st, 2nd, 5th, 6th** — these are *diatonic* degree names read off the major pentatonic frame (Tizita major is `C D E G A`, so G is the 5th and A the 6th). The label names the position, not the index, and it stays with that position across every scale.
+
+### 🎧 The quiz is data too
+
+`src/quiz/` is pure in the same way. What the quiz asks about is a list in `src/quiz/catalog.js`, and the difficulty ladder is a table in `src/quiz/levels.js`. To quiz a variation, add a line:
+
+```js
+{ scaleId: 'TIZITA-1', degree: 4 },   // "Tizita major from the 6th"
+```
+
+Questions, scoring, the answer buttons and saved stats all work from that list. Answers are judged by **sound**, not name: entries with the same interval pattern (that one sounds exactly like Bati minor) are never offered side by side, and either name counts as right. Stats are keyed by entry id, so adding or removing entries never breaks anyone's saved progress.
 
 ### 🔊 Sound: decode once, schedule precisely
 
@@ -102,14 +119,14 @@ The keyboard is sized from its own height at a fixed aspect ratio rather than st
 ```bash
 npm install
 npm run dev        # dev server on http://localhost:3000
-npm test           # 23 tests across 3 suites
+npm test           # 36 tests across 4 suites
 npm run build      # production bundle into build/
 npm run preview    # serve that bundle locally
 ```
 
 The dev server also binds to your LAN address, so you can open it on a phone on the same network — handy, since the landscape and touch behaviour are the parts you can't check on a desktop.
 
-Built with **Vite**, tested with **Vitest**. The only runtime dependency is React itself — the whole bundle is about **75 kB of JavaScript and 8 kB of CSS**, gzipped.
+Built with **Vite**, tested with **Vitest**. The only runtime dependency is React itself — the whole bundle is about **78 kB of JavaScript and 8.5 kB of CSS**, gzipped.
 
 Needs a reasonably current browser: Web Audio, Pointer Events and CSS container queries.
 
@@ -119,8 +136,9 @@ Needs a reasonably current browser: Web Audio, Pointer Events and CSS container 
 src/
   music/        scale and note theory — pure, tested, no dependencies
   audio/        Web Audio engine: sample loading, voices, scheduling
-  hooks/        scale playback, computer-keyboard input
-  components/   Keyboard, Toolbar, ScaleReadout, EquivalentScales, StartGate
+  quiz/         ear-training catalog, levels, questions, stats — pure, tested
+  hooks/        scale playback, computer-keyboard input, quiz state, the /quiz route
+  components/   Keyboard, Toolbar, ScaleReadout, EquivalentScales, StartGate, QuizPanel, ProgressSheet
   lib/          orientation and fullscreen helpers
   sounds/       25 piano samples, C3–C5
 

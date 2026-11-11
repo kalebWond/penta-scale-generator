@@ -5,12 +5,28 @@ import Toolbar from './components/Toolbar'
 import ScaleReadout from './components/ScaleReadout'
 import EquivalentScales from './components/EquivalentScales'
 import StartGate from './components/StartGate'
+import QuizPanel from './components/QuizPanel'
+import ProgressSheet from './components/ProgressSheet'
+import { ModeSwitch } from './components/Segmented'
 import { useKeyboardInput } from './hooks/useKeyboardInput'
 import { useScalePlayer } from './hooks/useScalePlayer'
+import { useMode } from './hooks/useMode'
+import { useQuiz } from './hooks/useQuiz'
 import { isLoaded, loadSamples, noteOff, noteOn } from './audio/engine'
 import { NOTE_COUNT, notes } from './music/notes'
-import { degreeOffset, getScale, getScaleRun } from './music/scales'
+import { degreeOffset, getScale, getScaleKeys, getScaleRun } from './music/scales'
 import { isTouchDevice } from './lib/orientation'
+
+const NO_ROLES = new Map()
+
+// Every key belonging to the run's notes (both octaves) gets marked; the start note stands out.
+function rolesFor(keys) {
+    const startPc = keys[0] % 12
+    const pcs = new Set(keys.map(k => k % 12))
+    const map = new Map()
+    notes.forEach(n => { if (pcs.has(n.pc)) map.set(n.index, n.pc === startPc ? 'start' : 'scale') })
+    return map
+}
 
 const withItem = (set, item) => new Set(set).add(item)
 const withoutItem = (set, item) => {
@@ -27,6 +43,9 @@ function App() {
     const [showLabels, setShowLabels] = useState(() => !isTouchDevice())
     const [sustain, setSustain] = useState(false)
     const [sheetOpen, setSheetOpen] = useState(false)
+    const [progressOpen, setProgressOpen] = useState(false)
+    const [mode, setMode] = useMode()
+    const quiz = useQuiz(rootPc)
 
     const [started, setStarted] = useState(false)
     const [loadedCount, setLoadedCount] = useState(0)
@@ -80,17 +99,29 @@ function App() {
 
     const run = useMemo(() => getScaleRun(scaleId, degree, rootPc), [scaleId, degree, rootPc])
 
-    // Every key belonging to the scale (both octaves) gets marked; the start note stands out.
+    // In the quiz the keys stay unmarked until you've answered -- the markings would give it away.
     const roles = useMemo(() => {
-        const startPc = run.keys[0] % 12
-        const pcs = new Set(run.keys.map(k => k % 12))
-        const map = new Map()
-        notes.forEach(n => { if (pcs.has(n.pc)) map.set(n.index, n.pc === startPc ? 'start' : 'scale') })
-        return map
-    }, [run])
+        if (mode === 'practice') return rolesFor(run.keys)
+        return quiz.question && quiz.answer ? rolesFor(quiz.question.keys) : NO_ROLES
+    }, [mode, run, quiz.question, quiz.answer])
 
     // Changing what's selected ends any run that's still playing.
     const change = (setter) => (value) => { player.stop(); setter(value) }
+
+    // The back button can change the mode too, so this follows `mode` rather than the switch.
+    useEffect(() => {
+        player.stop()
+        setSheetOpen(false)
+        setProgressOpen(false)
+    }, [mode, player.stop])
+
+    const nextQuestion = () => player.play(quiz.next().keys, speed, sustain)
+
+    // Your answer first, then the right one, both from the question's start note.
+    function hearBoth() {
+        const { question, answer } = quiz
+        player.playRuns([getScaleKeys(answer.item.steps, question.root), question.keys], speed, sustain)
+    }
 
     // Lifting the pedal damps what it was holding, except keys that are still held down.
     // A playing run was scheduled with the old setting, so it ends here too.
@@ -118,22 +149,38 @@ function App() {
         <div className="app">
             <div className="piano">
                 <div className="piano__panel">
-                    <Toolbar
-                        rootPc={rootPc} onRoot={change(setRootPc)}
-                        scaleId={scaleId} onScale={change(setScaleId)}
-                        degree={degree} onDegree={change(setDegree)}
-                        speed={speed} onSpeed={setSpeed}
-                        playing={player.playing} onPlay={() => player.play(run.keys, speed, sustain)} onStop={player.stop} />
-                    <ScaleReadout scaleId={scaleId} degree={degree} run={run} step={step}
-                        showLabels={showLabels} onToggleLabels={() => setShowLabels(v => !v)}
-                        sustain={sustain} onToggleSustain={toggleSustain}
-                        onOpenEquivalents={() => setSheetOpen(true)} />
+                    {mode === 'quiz' ? (
+                        <QuizPanel quiz={quiz} playing={player.playing} speed={speed} onSpeed={setSpeed}
+                            onStart={nextQuestion} onNext={nextQuestion}
+                            onReplay={() => player.play(quiz.question.keys, speed, sustain)}
+                            onStop={player.stop} onAnswer={quiz.submit} onHearBoth={hearBoth}
+                            onOpenProgress={() => setProgressOpen(true)}
+                            modeSwitch={<ModeSwitch mode={mode} onMode={setMode} />} />
+                    ) : (
+                        <>
+                            <Toolbar
+                                rootPc={rootPc} onRoot={change(setRootPc)}
+                                scaleId={scaleId} onScale={change(setScaleId)}
+                                degree={degree} onDegree={change(setDegree)}
+                                speed={speed} onSpeed={setSpeed}
+                                playing={player.playing} onPlay={() => player.play(run.keys, speed, sustain)} onStop={player.stop}
+                                modeSwitch={<ModeSwitch mode={mode} onMode={setMode} />} />
+                            <ScaleReadout scaleId={scaleId} degree={degree} run={run} step={step}
+                                showLabels={showLabels} onToggleLabels={() => setShowLabels(v => !v)}
+                                sustain={sustain} onToggleSustain={toggleSustain}
+                                onOpenEquivalents={() => setSheetOpen(true)} />
+                        </>
+                    )}
                 </div>
                 <div className="piano__bed">
                     <Keyboard pressed={pressed} lit={lit} roles={roles} showLabels={showLabels}
                         isReady={isLoaded} onPress={press} onRelease={release} />
                 </div>
             </div>
+            {progressOpen && (
+                <ProgressSheet stats={quiz.stats} items={quiz.items} onReset={quiz.reset}
+                    onClose={() => setProgressOpen(false)} />
+            )}
             {sheetOpen && (
                 <EquivalentScales startPc={run.keys[0] % 12} onSelect={selectEquivalent}
                     onClose={() => setSheetOpen(false)} />

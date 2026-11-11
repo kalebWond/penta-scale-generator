@@ -1,0 +1,2 @@
+# Single-page app: /quiz (and any other path) is served by index.html, which reads the path.
+/*  /index.html  200
