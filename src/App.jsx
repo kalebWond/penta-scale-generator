@@ -7,11 +7,14 @@ import EquivalentScales from './components/EquivalentScales'
 import StartGate from './components/StartGate'
 import QuizPanel from './components/QuizPanel'
 import ProgressSheet from './components/ProgressSheet'
+import ChordsPanel from './components/ChordsPanel'
 import { ModeSwitch } from './components/Segmented'
 import { useKeyboardInput } from './hooks/useKeyboardInput'
 import { useScalePlayer } from './hooks/useScalePlayer'
 import { useMode } from './hooks/useMode'
 import { useQuiz } from './hooks/useQuiz'
+import { useSong, useSongIndex } from './hooks/useSongs'
+import { chordKeys, songScale } from './songs/timeline'
 import { isLoaded, loadSamples, noteOff, noteOn } from './audio/engine'
 import { NOTE_COUNT, notes } from './music/notes'
 import { degreeOffset, getScale, getScaleKeys, getScaleRun } from './music/scales'
@@ -44,8 +47,12 @@ function App() {
     const [sustain, setSustain] = useState(false)
     const [sheetOpen, setSheetOpen] = useState(false)
     const [progressOpen, setProgressOpen] = useState(false)
-    const [mode, setMode] = useMode()
+    const [mode, setMode, songId] = useMode()
     const quiz = useQuiz(rootPc)
+    const songs = useSongIndex(mode === 'chords')
+    const song = useSong(mode === 'chords' ? songId : null)
+    const [simplify, setSimplify] = useState(false)
+    const [currentChord, setCurrentChord] = useState(null)
 
     const [started, setStarted] = useState(false)
     const [loadedCount, setLoadedCount] = useState(0)
@@ -100,10 +107,17 @@ function App() {
     const run = useMemo(() => getScaleRun(scaleId, degree, rootPc), [scaleId, degree, rootPc])
 
     // In the quiz the keys stay unmarked until you've answered -- the markings would give it away.
+    // In chords mode they show the song's scale, and the chord now playing is held down.
+    const songData = mode === 'chords' && songId ? song.data : null
     const roles = useMemo(() => {
         if (mode === 'practice') return rolesFor(run.keys)
+        if (mode === 'chords') {
+            const scale = songScale(songData)
+            return scale ? rolesFor(getScaleRun(scale.scaleId, 0, scale.rootPc).keys) : NO_ROLES
+        }
         return quiz.question && quiz.answer ? rolesFor(quiz.question.keys) : NO_ROLES
-    }, [mode, run, quiz.question, quiz.answer])
+    }, [mode, run, songData, quiz.question, quiz.answer])
+    const chordLit = useMemo(() => new Set(chordKeys(currentChord)), [currentChord])
 
     // Changing what's selected ends any run that's still playing.
     const change = (setter) => (value) => { player.stop(); setter(value) }
@@ -147,9 +161,15 @@ function App() {
 
     return (
         <div className="app">
-            <div className="piano">
+            <div className={`piano${mode === 'chords' && songId ? ' piano--song' : ''}`}>
                 <div className="piano__panel">
-                    {mode === 'quiz' ? (
+                    {mode === 'chords' ? (
+                        <ChordsPanel songs={songs} songId={songId} song={song}
+                            onSelectSong={(id) => setMode('chords', id)}
+                            simplify={simplify} onToggleSimplify={() => setSimplify(v => !v)}
+                            onChordChange={setCurrentChord}
+                            modeSwitch={<ModeSwitch mode={mode} onMode={setMode} />} />
+                    ) : mode === 'quiz' ? (
                         <QuizPanel quiz={quiz} playing={player.playing} speed={speed} onSpeed={setSpeed}
                             onStart={nextQuestion} onNext={nextQuestion}
                             onReplay={() => player.play(quiz.question.keys, speed, sustain)}
@@ -173,7 +193,8 @@ function App() {
                     )}
                 </div>
                 <div className="piano__bed">
-                    <Keyboard pressed={pressed} lit={lit} roles={roles} showLabels={showLabels}
+                    <Keyboard pressed={pressed} lit={mode === 'chords' ? chordLit : lit} roles={roles}
+                        showLabels={showLabels}
                         isReady={isLoaded} onPress={press} onRelease={release} />
                 </div>
             </div>

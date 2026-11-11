@@ -1,6 +1,9 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
-from analyze import parse_metadata, video_id_from
+from analyze import parse_metadata, video_id_from, write_index
 
 ID = "CocA4mTVKw4"
 
@@ -39,6 +42,21 @@ class Metadata(unittest.TestCase):
                      {"title": "x"}]:
             with self.subTest(info=info), self.assertRaises(ValueError):
                 parse_metadata(info)
+
+
+class Index(unittest.TestCase):
+    def test_lists_songs_by_title_and_skips_other_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            song = {"videoId": "bbbbbbbbbbb", "title": "Zion", "duration": 200, "key": "G", "tonic": "G",
+                    "mode": "major", "bpm": 90, "chords": [{"t": 0, "c": "G"}]}
+            Path(d, "bbbbbbbbbbb.json").write_text(json.dumps(song))
+            Path(d, "aaaaaaaaaaa.json").write_text(json.dumps({**song, "videoId": "aaaaaaaaaaa", "title": "amen"}))
+            Path(d, "broken.json").write_text("{not json")
+            Path(d, "index.json").write_text("[]")
+            songs = write_index(d)
+            self.assertEqual([s["title"] for s in songs], ["amen", "Zion"])
+            self.assertNotIn("chords", songs[0])
+            self.assertEqual(json.loads(Path(d, "index.json").read_text()), songs)
 
 
 if __name__ == "__main__":

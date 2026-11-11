@@ -17,6 +17,7 @@ export default Segmented
 const MODES = [
     { value: 'practice', label: 'Practice' },
     { value: 'quiz', label: 'Quiz' },
+    { value: 'chords', label: 'Chords' },
 ]
 
 export function ModeSwitch({ mode, onMode }) {

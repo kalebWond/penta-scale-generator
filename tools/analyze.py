@@ -73,6 +73,26 @@ def fetch_metadata(video_id):
         sys.exit(f"Cannot analyze {video_id}: {e}")
 
 
+INDEX_FIELDS = ("videoId", "title", "duration", "key", "tonic", "mode", "bpm")
+
+
+def write_index(songs_dir):
+    """Rebuild songs_dir/index.json (the app's song list) from every song JSON there."""
+    songs = []
+    for path in sorted(Path(songs_dir).glob("*.json")):
+        if path.name == "index.json":
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(data, dict) and data.get("videoId"):
+            songs.append({k: data.get(k) for k in INDEX_FIELDS})
+    songs.sort(key=lambda s: (s["title"] or "").lower())
+    Path(songs_dir, "index.json").write_text(json.dumps(songs, ensure_ascii=False, indent=1) + "\n")
+    return songs
+
+
 def download_audio(video_id, workdir):
     """Mono 22.05 kHz WAV, which is all the models need."""
     subprocess.run(
@@ -100,7 +120,9 @@ def run_chords(wav):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("video", help="YouTube video id or URL")
+    ap.add_argument("video", nargs="?", help="YouTube video id or URL")
+    ap.add_argument("--reindex", action="store_true",
+                    help="only rebuild the song list (index.json) and exit")
     ap.add_argument("--checkpoint", help="local Beat This! checkpoint (skips its slow download)")
     ap.add_argument("--out", default=str(SONGS_DIR), help="output folder (default: public/songs)")
     ap.add_argument("--threads", type=int, default=4)
@@ -109,6 +131,13 @@ def main():
     ap.add_argument("--allow-unembeddable", action="store_true",
                     help="analyze even if the video cannot be embedded (the app cannot play it)")
     args = ap.parse_args()
+
+    if args.reindex:
+        songs = write_index(args.out)
+        print(f"wrote {Path(args.out) / 'index.json'}: {len(songs)} songs")
+        return
+    if not args.video:
+        ap.error("a video id or URL is required (or --reindex)")
 
     video_id = video_id_from(args.video)
     out_path = Path(args.out) / f"{video_id}.json"
@@ -148,6 +177,7 @@ def main():
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+    write_index(out_path.parent)
     slash = sum(1 for c in result["chords"] if "bass" in c)
     print(f"wrote {out_path}: key {result['key']}, {result['bpm']} BPM, "
           f"{result['beatsPerBar']} beats/bar, {len(result['chords'])} chords ({slash} with a bass note)")

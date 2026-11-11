@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
-// Practice lives at /, the quiz at /quiz. No router: one path to read and the History API to
-// change it, so links to /quiz work and the back button leaves the quiz. (Netlify serves
-// index.html for /quiz via public/_redirects.)
+// Practice lives at /, the quiz at /quiz, song chords at /chords (the list) and
+// /chords/<videoId> (one song). No router: one path to read and the History API to change it,
+// so links work and the back button goes back. (Netlify serves index.html for these paths
+// via public/_redirects. The song data itself is at /songs/<videoId>.json, a different path.)
 const PAGES = {
     practice: {
         path: '/',
@@ -12,31 +13,52 @@ const PAGES = {
         path: '/quiz',
         title: 'Ear training quiz · PentaScales',
     },
+    chords: {
+        path: '/chords',
+        title: 'Song chords · PentaScales',
+    },
 }
 
-const modeFromPath = () => window.location.pathname.replace(/\/+$/, '') === '/quiz' ? 'quiz' : 'practice'
+const VIDEO_ID = /^[\w-]{11}$/
+
+export function routeFromPath(pathname) {
+    const parts = pathname.split('/').filter(Boolean)
+    if (parts.length === 1 && parts[0] === 'quiz') return { mode: 'quiz', songId: null }
+    if (parts[0] === 'chords' && parts.length <= 2) {
+        return { mode: 'chords', songId: VIDEO_ID.test(parts[1] ?? '') ? parts[1] : null }
+    }
+    return { mode: 'practice', songId: null }
+}
+
+export const pathFor = (mode, songId) => mode === 'chords' && songId ? `/chords/${songId}` : PAGES[mode].path
+
+export const pageTitle = (mode) => PAGES[mode].title
+
+const currentRoute = () => routeFromPath(window.location.pathname)
 
 export function useMode() {
-    const [mode, setMode] = useState(modeFromPath)
+    const [route, setRoute] = useState(currentRoute)
 
     useEffect(() => {
-        const onPop = () => setMode(modeFromPath())
+        const onPop = () => setRoute(currentRoute())
         window.addEventListener('popstate', onPop)
         return () => window.removeEventListener('popstate', onPop)
     }, [])
 
     // Title and canonical follow the page, so a shared /quiz link isn't treated as a copy of /.
+    // (A song page sets its own title once the song has loaded.)
     useEffect(() => {
-        document.title = PAGES[mode].title
+        document.title = PAGES[route.mode].title
         const canonical = document.querySelector('link[rel="canonical"]')
-        if (canonical) canonical.href = new URL(PAGES[mode].path, canonical.href).href
-    }, [mode])
+        if (canonical) canonical.href = new URL(pathFor(route.mode, route.songId), canonical.href).href
+    }, [route.mode, route.songId])
 
-    const go = useCallback((next) => {
-        if (next === modeFromPath()) return
-        window.history.pushState(null, '', PAGES[next].path + window.location.search)
-        setMode(next)
+    const go = useCallback((mode, songId = null) => {
+        const now = currentRoute()
+        if (now.mode === mode && now.songId === songId) return
+        window.history.pushState(null, '', pathFor(mode, songId) + window.location.search)
+        setRoute({ mode, songId })
     }, [])
 
-    return [mode, go]
+    return [route.mode, go, route.songId]
 }

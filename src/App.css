@@ -686,6 +686,177 @@ select {
   box-shadow: 0 0 0 3px rgba(242, 181, 68, 0.35);
 }
 
+/* ---------- song chords ----------
+   With a song open the panel takes the room: the video and the chord lane matter more
+   than a big keyboard, which shrinks to a strip showing the scale and the chord now. */
+
+.field--song {
+  max-width: 420px;
+}
+
+.song {
+  display: flex;
+  gap: 12px;
+  min-height: 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.piano--song {
+  height: 100%;
+}
+
+.piano--song .piano__panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.piano--song .song {
+  flex: 1 1 auto;
+}
+
+.piano--song .piano__bed {
+  flex: 0 0 auto;
+  height: clamp(90px, 28vh, 240px);
+}
+
+.song__video {
+  flex: 0 1 auto;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  max-width: 62%;
+  overflow: hidden;
+  background: #000;
+  border-radius: 7px;
+}
+
+.song__video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.lane {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lane__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.lane__meta b {
+  color: var(--text);
+}
+
+/* Chord names use the text face, not the display one: Cinzel has no lowercase, so "Em"
+   would read as "EM" and a minor chord would look major. */
+.lane__now {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: clamp(2.2rem, 10vh, 4.5rem);
+  line-height: 1;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.lane__beats {
+  display: flex;
+  gap: 6px;
+  height: 10px;
+}
+
+.lane__beats i {
+  width: 10px;
+  height: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.lane__beats i:first-child {
+  border-color: rgba(242, 181, 68, 0.6);    /* the downbeat */
+}
+
+.lane__beats i.is-on {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.lane__next {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.lane__next .chip {
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.lane__next .chip:disabled {
+  cursor: default;
+}
+
+.lane__next li:first-child .chip {
+  border-color: rgba(242, 181, 68, 0.6);    /* the next change */
+}
+
+.lane__warn {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #f0a39b;
+}
+
+.song__msg {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
+.song__msg code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text);
+}
+
+.song__list {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 6px;
+  max-height: 40vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.song__title {
+  margin-right: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song__key {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* ---------- similar scales sheet ---------- */
 
 .sheet-backdrop {
@@ -977,6 +1148,27 @@ select {
 
   .gate__hint, .gate__credit {
     display: none;
+  }
+
+  .piano--song .piano__bed {
+    height: clamp(64px, 24vh, 120px);
+  }
+
+  .song {
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  .lane {
+    gap: 5px;
+  }
+
+  .lane__meta {
+    font-size: 0.75rem;
+  }
+
+  .lane__now {
+    font-size: clamp(1.6rem, 12vh, 2.6rem);
   }
 }
 
