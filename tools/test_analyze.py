@@ -49,13 +49,19 @@ class Index(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             song = {"videoId": "bbbbbbbbbbb", "title": "Zion", "duration": 200, "key": "G", "tonic": "G",
                     "mode": "major", "bpm": 90, "chords": [{"t": 0, "c": "G"}]}
-            Path(d, "bbbbbbbbbbb.json").write_text(json.dumps(song))
-            Path(d, "aaaaaaaaaaa.json").write_text(json.dumps({**song, "videoId": "aaaaaaaaaaa", "title": "amen"}))
+            Path(d, "bbbbbbbbbbb.json").write_text(json.dumps({**song, "analyzedAt": "2026-11-12", "pick": True}))
+            Path(d, "aaaaaaaaaaa.json").write_text(json.dumps({**song, "videoId": "aaaaaaaaaaa", "title": "amen",
+                                                               "manual": {"beatsPerBar": 3}}))
             Path(d, "broken.json").write_text("{not json")
             Path(d, "index.json").write_text("[]")
             songs = write_index(d)
             self.assertEqual([s["title"] for s in songs], ["amen", "Zion"])
             self.assertNotIn("chords", songs[0])
+            self.assertEqual((songs[1]["analyzedAt"], songs[1]["pick"]), ("2026-11-12", True))
+            self.assertFalse(songs[0]["pick"])
+            self.assertEqual(songs[0]["manual"], {"beatsPerBar": 3})   # hand-set values reach the list
+            self.assertNotIn("manual", songs[1])
+            self.assertRegex(songs[0]["analyzedAt"], r"^\d{4}-\d{2}-\d{2}$")  # from the file's date
             self.assertEqual(json.loads(Path(d, "index.json").read_text()), songs)
 
 

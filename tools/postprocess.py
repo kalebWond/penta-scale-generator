@@ -109,6 +109,36 @@ def median_ibi(beats):
     return median(ibi) if ibi else None
 
 
+def clean_beats(beats, downbeats, too_close=0.5, missed=1.6):
+    """Fix the beat model's occasional slips, so every beat is one beat long.
+
+    - A beat less than `too_close` of the usual gap after the one before is a double detection:
+      it's dropped. (Aster Abebe's "Simihin Terahu" had 11 of them, 0.08 s after a real beat,
+      against a 0.44 s beat; each one broke the bar count.)
+    - A gap of about two beats (more than `missed` times the usual) is a missed beat: one is put
+      back in the middle. Longer gaps (a break in the music) are left alone.
+    Downbeats that were dropped beats move to the beat they doubled.
+    Returns (beats, downbeats).
+    """
+    ibi = median_ibi(beats)
+    if not ibi:
+        return list(beats), list(downbeats)
+    kept = []
+    moved = {}
+    for t in beats:
+        if kept and t - kept[-1] < too_close * ibi:
+            moved[t] = kept[-1]
+            continue
+        kept.append(t)
+    filled = []
+    for i, t in enumerate(kept):
+        if i and missed * ibi < t - kept[i - 1] < 2.5 * ibi:
+            filled.append((kept[i - 1] + t) / 2)
+        filled.append(t)
+    fixed_downbeats = sorted({moved.get(d, d) for d in downbeats})
+    return filled, fixed_downbeats
+
+
 def detect_tempo(beats):
     ibi = median_ibi(beats)
     return 60.0 / ibi if ibi else None
@@ -233,6 +263,7 @@ def build_timeline(raw_chords, beats, downbeats):
     Each chord is {"t": seconds, "c": "D"} plus "bass": "F#" when the bass is not the root.
     "c" is already the simplified name, so a simplify toggle just ignores "bass".
     """
+    beats, downbeats = clean_beats(beats, downbeats)
     segments, end_time = build_segments(raw_chords, beats)
     key = detect_key(segments, end_time)
     scale = {}

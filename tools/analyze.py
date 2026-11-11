@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from datetime import date
 from pathlib import Path
 
 import postprocess
@@ -73,11 +74,22 @@ def fetch_metadata(video_id):
         sys.exit(f"Cannot analyze {video_id}: {e}")
 
 
-INDEX_FIELDS = ("videoId", "title", "duration", "key", "tonic", "mode", "bpm")
+INDEX_FIELDS = ("videoId", "title", "duration", "key", "tonic", "mode", "bpm", "analyzedAt", "pick", "manual")
+
+# Set by hand in a song's JSON, and kept when the song is analyzed again:
+#   "pick": true     show it in the app's Recommended row
+#   "manual": {...}  what the models can't tell, e.g. {"beatsPerBar": 3} for a 6/8 song the beat
+#                    model counted in 6, or {"scaleId": "TIZITA-1", "degree": 1, "tonic": "D"}
+#                    for Tizita major from the 2nd (see src/features/songs/timeline.js)
+HAND_SET = ("pick", "manual")
 
 
 def write_index(songs_dir):
-    """Rebuild songs_dir/index.json (the app's song list) from every song JSON there."""
+    """Rebuild songs_dir/index.json (the app's song list) from every song JSON there.
+
+    "analyzedAt" (a date) orders "newest"; a song analyzed before it existed gets its file's date.
+    "pick": true in a song's JSON puts it in the app's Recommended row.
+    """
     songs = []
     for path in sorted(Path(songs_dir).glob("*.json")):
         if path.name == "index.json":
@@ -87,7 +99,12 @@ def write_index(songs_dir):
         except (OSError, json.JSONDecodeError):
             continue
         if isinstance(data, dict) and data.get("videoId"):
-            songs.append({k: data.get(k) for k in INDEX_FIELDS})
+            entry = {k: data.get(k) for k in INDEX_FIELDS}
+            entry["analyzedAt"] = entry["analyzedAt"] or date.fromtimestamp(path.stat().st_mtime).isoformat()
+            entry["pick"] = bool(entry["pick"])
+            if not entry["manual"]:
+                del entry["manual"]
+            songs.append(entry)
     songs.sort(key=lambda s: (s["title"] or "").lower())
     Path(songs_dir, "index.json").write_text(json.dumps(songs, ensure_ascii=False, indent=1) + "\n")
     return songs
@@ -172,7 +189,14 @@ def main():
         else:
             shutil.rmtree(workdir, ignore_errors=True)
 
-    result = {"videoId": video_id, "title": title, "duration": duration, "embeddable": embeddable}
+    result = {"videoId": video_id, "title": title, "duration": duration, "embeddable": embeddable,
+              "analyzedAt": date.today().isoformat()}
+    if out_path.exists():   # re-analyzing keeps what was set by hand
+        try:
+            before = json.loads(out_path.read_text())
+            result.update({k: before[k] for k in HAND_SET if before.get(k)})
+        except (OSError, json.JSONDecodeError):
+            pass
     result.update(postprocess.build_timeline(raw, beats, downbeats))
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

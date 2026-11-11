@@ -1,8 +1,8 @@
 import unittest
 
 from postprocess import (
-    build_segments, build_timeline, detect_beats_per_bar, detect_key, detect_tempo, parse_chord,
-    spell_interval,
+    build_segments, build_timeline, clean_beats, detect_beats_per_bar, detect_key, detect_tempo,
+    parse_chord, spell_interval,
 )
 
 
@@ -69,6 +69,26 @@ class Beats(unittest.TestCase):
     def test_meter_with_a_skipped_downbeat(self):
         downbeats = DOWNBEATS[:3] + DOWNBEATS[4:]  # one bar of 6 beats, the rest 3
         self.assertEqual(detect_beats_per_bar(BEATS, downbeats), 3)
+
+
+class CleanBeats(unittest.TestCase):
+    def test_a_double_detection_is_dropped_and_its_downbeat_moves(self):
+        beats = [0.0, 0.44, 0.88, 0.96, 1.32, 1.76]
+        cleaned, downbeats = clean_beats(beats, [0.0, 0.96])
+        self.assertEqual(cleaned, [0.0, 0.44, 0.88, 1.32, 1.76])
+        self.assertEqual(downbeats, [0.0, 0.88])
+
+    def test_one_missed_beat_is_put_back(self):
+        beats = [0.0, 0.44, 0.88, 1.76, 2.2]
+        cleaned, _ = clean_beats(beats, [])
+        self.assertEqual([round(t, 2) for t in cleaned], [0.0, 0.44, 0.88, 1.32, 1.76, 2.2])
+
+    def test_a_long_break_is_left_alone(self):
+        beats = [0.0, 0.44, 0.88, 1.32, 4.0, 4.44, 4.88]
+        self.assertEqual(clean_beats(beats, [])[0], beats)
+
+    def test_clean_beats_are_unchanged(self):
+        self.assertEqual(clean_beats(BEATS, DOWNBEATS), (BEATS, DOWNBEATS))
 
 
 class Segments(unittest.TestCase):
