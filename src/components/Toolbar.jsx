@@ -1,6 +1,7 @@
 import { ROOTS } from '../music/notes'
 import { DEGREES, SCALES } from '../music/scales'
 import { PlayIcon, StopIcon } from './icons'
+import Segmented from './Segmented'
 
 export const SPEEDS = [
     { value: 0.75, label: '0.75×' },
@@ -8,18 +9,12 @@ export const SPEEDS = [
     { value: 1.5, label: '1.5×' },
 ]
 
-function Segmented({ options, value, onChange, label }) {
-    return (
-        <div className="seg" role="group" aria-label={label}>
-            {options.map(o => (
-                <button key={o.value} type="button" aria-pressed={o.value === value}
-                    className={o.value === value ? 'is-on' : ''} onClick={() => onChange(o.value)}>
-                    {o.label}
-                </button>
-            ))}
-        </div>
-    )
-}
+export const SpeedField = ({ speed, onSpeed }) => (
+    <div className="field">
+        <span className="field__label">Speed</span>
+        <Segmented label="Speed" options={SPEEDS} value={speed} onChange={onSpeed} />
+    </div>
+)
 
 const blurAfter = (fn) => (e) => {
     fn(e.target.value)
@@ -28,11 +23,12 @@ const blurAfter = (fn) => (e) => {
 
 function Toolbar({
     rootPc, onRoot, scaleId, onScale, degree, onDegree, speed, onSpeed,
-    playing, onPlay, onStop,
+    playing, onPlay, onStop, modeSwitch,
 }) {
     return (
         <header className="toolbar">
             <h1 className="brand">Penta<span>Scales</span></h1>
+            {modeSwitch}
 
             <label className="field">
                 <span className="field__label">Root</span>
@@ -58,11 +54,7 @@ function Toolbar({
                 {playing ? <><StopIcon /> Stop</> : <><PlayIcon /> Play</>}
             </button>
 
-            <div className="field">
-                <span className="field__label">Speed</span>
-                <Segmented label="Speed" options={SPEEDS} value={speed} onChange={onSpeed} />
-            </div>
-
+            <SpeedField speed={speed} onSpeed={onSpeed} />
         </header>
     )
 }
