@@ -37,12 +37,18 @@ const ERRORS = {
 const POLL_MS = 100
 
 // Mounts a YouTube player inside `containerRef` and reports its time about ten times a second.
-// The time is polled rather than taken from events because YouTube sends none while playing
-// or when someone drags the seek bar.
+// The time is polled rather than taken from events because YouTube sends none while playing.
+// YouTube's own controls are hidden: the page draws its own (play, pause, seek, restart, sound).
+// The player still has to be at least 200px by 200px (YouTube's rule for embeds).
 export function useYouTubePlayer(containerRef, videoId) {
     const playerRef = useRef(null)
-    const [status, setStatus] = useState({ ready: false, playing: false, duration: 0, error: null })
+    const [status, setStatus] = useState({
+        ready: false, playing: false, duration: 0, error: null, muted: false, volume: 100,
+    })
     const [time, setTime] = useState(0)
+    // Right after a seek, YouTube can still report the old position once or twice; those
+    // reports would flash the old spot on the track, so they're dropped until the new one shows.
+    const pendingSeek = useRef(null)
 
     useEffect(() => {
         const container = containerRef.current
@@ -51,7 +57,7 @@ export function useYouTubePlayer(containerRef, videoId) {
         let poll = null
         const mount = document.createElement('div')   // YouTube replaces this with its iframe
         container.appendChild(mount)
-        setStatus({ ready: false, playing: false, duration: 0, error: null })
+        setStatus(s => ({ ...s, ready: false, playing: false, duration: 0, error: null }))
         setTime(0)
 
         loadApi().then(YT => {
@@ -60,14 +66,23 @@ export function useYouTubePlayer(containerRef, videoId) {
                 videoId,
                 width: '100%',
                 height: '100%',
-                playerVars: { playsinline: 1, rel: 0 },
+                playerVars: { playsinline: 1, rel: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3 },
                 events: {
                     onReady: (e) => {
                         if (cancelled) return
-                        setStatus(s => ({ ...s, ready: true, duration: e.target.getDuration() || 0 }))
+                        const p = e.target
+                        setStatus(s => ({
+                            ...s, ready: true, duration: p.getDuration() || 0, muted: p.isMuted(), volume: p.getVolume(),
+                        }))
                         poll = setInterval(() => {
                             const t = playerRef.current?.getCurrentTime?.()
-                            if (typeof t === 'number') setTime(prev => (Math.abs(prev - t) < 0.01 ? prev : t))
+                            if (typeof t !== 'number') return
+                            const seek = pendingSeek.current
+                            if (seek) {
+                                if (Math.abs(t - seek.t) > 1 && performance.now() < seek.until) return
+                                pendingSeek.current = null
+                            }
+                            setTime(prev => (Math.abs(prev - t) < 0.01 ? prev : t))
                         }, POLL_MS)
                     },
                     onStateChange: (e) => {
@@ -100,9 +115,29 @@ export function useYouTubePlayer(containerRef, videoId) {
     const seekTo = useCallback((t) => {
         const player = playerRef.current
         if (!player?.seekTo) return
+        pendingSeek.current = { t, until: performance.now() + 1500 }
         player.seekTo(t, true)
         setTime(t)
     }, [])
 
-    return { ...status, time, seekTo }
+    const play = useCallback(() => { playerRef.current?.playVideo?.() }, [])
+    const pause = useCallback(() => { playerRef.current?.pauseVideo?.() }, [])
+
+    const setMuted = useCallback((muted) => {
+        const player = playerRef.current
+        if (!player?.mute) return
+        if (muted) player.mute()
+        else player.unMute()
+        setStatus(s => ({ ...s, muted }))
+    }, [])
+
+    const setVolume = useCallback((volume) => {
+        const player = playerRef.current
+        if (!player?.setVolume) return
+        player.setVolume(volume)
+        if (volume > 0 && player.isMuted()) player.unMute()
+        setStatus(s => ({ ...s, volume, muted: volume === 0 ? s.muted : false }))
+    }, [])
+
+    return { ...status, time, seekTo, play, pause, setMuted, setVolume }
 }

@@ -29,6 +29,50 @@ export function StopIcon() {
     )
 }
 
+export function PauseIcon() {
+    return (
+        <svg className="icon" viewBox="0 0 12 14" aria-hidden="true" focusable="false">
+            <rect x="1.5" y="1.5" width="3.2" height="11" rx="0.8" />
+            <rect x="7.3" y="1.5" width="3.2" height="11" rx="0.8" />
+        </svg>
+    )
+}
+
+// Back to the start: a bar, and a triangle pointing at it.
+export function RestartIcon() {
+    return (
+        <svg className="icon" viewBox="0 0 12 14" aria-hidden="true" focusable="false">
+            <rect x="1" y="2" width="2" height="10" rx="0.6" />
+            <path d="M11 2v10L3.8 7z" />
+        </svg>
+    )
+}
+
+// Jump 10 seconds: a circular arrow around "10", turning back (rewind) or on (forward).
+export function SkipIcon({ forward = false }) {
+    return (
+        <svg className="icon icon--skip" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <g transform={forward ? 'translate(16 0) scale(-1 1)' : undefined}>
+                <path className="icon__stroke" d="M3.2 6.2A5.3 5.3 0 1 1 3 10" />
+                <path d="M1.6 2.4l1.9 4.4 4.3-2z" />
+            </g>
+            <text x="8.6" y="11.2" textAnchor="middle" className="icon__text">10</text>
+        </svg>
+    )
+}
+
+// A speaker, with sound waves or, muted, a cross.
+export function VolumeIcon({ muted = false }) {
+    return (
+        <svg className="icon icon--speaker" viewBox="0 0 16 14" aria-hidden="true" focusable="false">
+            <path d="M1 5h3l4-3.5v11L4 9H1z" />
+            {muted
+                ? <path className="icon__stroke" d="M10.5 4.5l4 5M14.5 4.5l-4 5" />
+                : <path className="icon__stroke" d="M10.5 4.5a3.5 3.5 0 0 1 0 5M12.5 2.5a6.3 6.3 0 0 1 0 9" />}
+        </svg>
+    )
+}
+
 // "Back to home", on the brand plate.
 export function BackIcon() {
     return (

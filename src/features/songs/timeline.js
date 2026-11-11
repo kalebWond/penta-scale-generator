@@ -1,10 +1,22 @@
-import { getScale } from '../../music/scales'
+import { DEGREES, degreeOffset, getScale } from '../../music/scales'
 
 // A song is the JSON that tools/analyze.py writes to public/songs/<videoId>.json:
 //   { videoId, title, duration, key, tonic, mode, bpm, beatsPerBar,
-//     chords: [{ t, c, bass? }], beats: [t], downbeats: [t] }
+//     chords: [{ t, c, bass? }], beats: [t], downbeats: [t], manual? }
 // `c` is already the simplified chord name ("D", "Em", "Bbm", "Bdim"); `bass` is set only
 // for a slash chord (D/F#). "N" means no chord.
+//
+// `manual` holds what a person set by hand because the models can't tell, and it wins over
+// what they found. The analysis tool keeps it when a song is analyzed again. For example:
+//   "manual": { "beatsPerBar": 3, "scaleId": "TIZITA-1", "degree": 1, "tonic": "D" }
+//   - beatsPerBar: the beat model only finds beats and downbeats, so it can't tell 3/4 from
+//     6/8 and may put a downbeat every 3 or every 6 eighth notes.
+//   - scaleId + degree: which Ethiopian scale, from which start (degree as in music/scales.js:
+//     0 = 1st, 1 = 2nd, 3 = 5th, 4 = 6th). The chord model only knows major and minor keys.
+//   - tonic: the song's home note, where that scale starts.
+
+// The song with its manual settings applied.
+export const withManual = (song) => (song?.manual ? { ...song, ...song.manual } : song)
 
 export const NO_CHORD = 'N'
 
@@ -83,13 +95,21 @@ export function chordKeys(chord) {
 
 // The Ethiopian scale to light on the keyboard. The chord model can only say major or minor,
 // so a minor song gets Bati minor (the minor pentatonic) and a major one Tizita major (the
-// major pentatonic), on the song's tonic. A song JSON can name another with "scaleId".
+// major pentatonic), from the 1st, on the song's tonic. `manual` can name the scale and the
+// start: Tizita major from the 2nd on D is the notes of C Tizita major (C D E G A), played
+// from D, so its home is D.
+//   { scaleId, degree, rootPc (the scale's 1st), homePc (where it starts), label }
 export function songScale(song) {
-    const rootPc = notePc(song?.tonic)
-    if (rootPc === null) return null
-    const scaleId = song.scaleId ?? (song.mode === 'minor' ? 'BATI-2' : 'TIZITA-1')
+    const s = withManual(song)
+    const homePc = notePc(s?.tonic)
+    if (homePc === null) return null
+    const scaleId = s.scaleId ?? (s.mode === 'minor' ? 'BATI-2' : 'TIZITA-1')
     const scale = getScale(scaleId)
-    return scale ? { scaleId, rootPc, label: `${pretty(song.tonic)} ${scale.label}` } : null
+    if (!scale) return null
+    const degree = s.degree ?? 0
+    const rootPc = (((homePc - degreeOffset(scale.steps, degree)) % 12) + 12) % 12
+    const from = degree ? ` ${DEGREES.find(d => d.value === degree)?.label ?? ''}` : ''
+    return { scaleId, degree, rootPc, homePc, label: `${pretty(s.tonic)} ${scale.label}${from}` }
 }
 
 // Which beat of the bar t falls on: { beat: 0-based, count }, or null before the first bar.

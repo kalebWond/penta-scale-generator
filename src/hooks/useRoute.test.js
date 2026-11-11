@@ -45,6 +45,6 @@ describe('routes', () => {
     test('ids and paths are unique, and home has no card', () => {
         expect(new Set(FEATURES.map(f => f.id)).size).toBe(FEATURES.length)
         expect(new Set(FEATURES.map(f => f.path)).size).toBe(FEATURES.length)
-        expect(CARDS.map(f => f.id)).toEqual(['scales', 'quiz', 'songs'])
+        expect(CARDS.map(f => f.id)).toEqual(['songs', 'scales', 'quiz'])
     })
 })

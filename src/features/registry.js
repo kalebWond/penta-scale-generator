@@ -12,6 +12,19 @@ export const FEATURES = [
         title: 'PentaScales · Ethiopian pentatonic scales on an interactive piano',
     },
     {
+        id: 'songs',
+        // Song data is /songs/<videoId>.json; a page path never ends in .json, so they can't clash.
+        path: '/songs',
+        title: 'Songs · PentaScales',
+        // A song page is /songs/<videoId>; anything else after the slash is the song list.
+        isParam: (segment) => VIDEO_ID.test(segment),
+        card: {
+            label: 'Songs',
+            icon: 'songs',
+            description: 'Chords for Ethiopian songs, in time with the video.',
+        },
+    },
+    {
         id: 'scales',
         path: '/scales',
         title: 'Scales · PentaScales',
@@ -29,19 +42,6 @@ export const FEATURES = [
             label: 'Quiz',
             icon: 'quiz',
             description: 'Hear a scale and name it. It gets harder as you get better.',
-        },
-    },
-    {
-        id: 'songs',
-        // Song data is /songs/<videoId>.json; a page path never ends in .json, so they can't clash.
-        path: '/songs',
-        title: 'Songs · PentaScales',
-        // A song page is /songs/<videoId>; anything else after the slash is the song list.
-        isParam: (segment) => VIDEO_ID.test(segment),
-        card: {
-            label: 'Songs',
-            icon: 'songs',
-            description: 'Chords for Ethiopian songs, in time with the video.',
         },
     },
 ]

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { withManual } from './timeline'
 
 // Song data is static JSON written by tools/analyze.py into public/songs/.
 const cache = new Map()
@@ -35,7 +36,15 @@ function useJson(url) {
     return state
 }
 
-// The song list, only fetched while it's needed.
-export const useSongIndex = (enabled) => useJson(enabled ? '/songs/index.json' : null)
+// Songs come out with their manual settings applied (a meter or a scale set by hand), so
+// nothing downstream has to know about them.
+const useWithManual = (state, apply) => {
+    const data = useMemo(() => (state.data ? apply(state.data) : state.data), [state.data, apply])
+    return data === state.data ? state : { ...state, data }
+}
+const applyToList = (songs) => songs.map(withManual)
 
-export const useSong = (videoId) => useJson(videoId ? `/songs/${videoId}.json` : null)
+// The song list, only fetched while it's needed.
+export const useSongIndex = (enabled) => useWithManual(useJson(enabled ? '/songs/index.json' : null), applyToList)
+
+export const useSong = (videoId) => useWithManual(useJson(videoId ? `/songs/${videoId}.json` : null), withManual)

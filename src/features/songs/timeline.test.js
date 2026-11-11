@@ -1,6 +1,6 @@
 import {
     beatInBar, chordKeys, displayChords, durationMismatch, formatTime, indexAt, notePc,
-    parseChordName, pretty, songScale,
+    parseChordName, pretty, songScale, withManual,
 } from './timeline'
 
 // The opening of the test song (Yihew Liben): E minor, 120 BPM, 3 beats per bar.
@@ -90,12 +90,24 @@ describe('chord keys on the keyboard', () => {
 
 describe('the song scale', () => {
     test('a minor song is Bati minor on its tonic', () => {
-        expect(songScale(SONG)).toEqual({ scaleId: 'BATI-2', rootPc: 4, label: 'E Bati minor' })
+        expect(songScale(SONG)).toEqual({ scaleId: 'BATI-2', degree: 0, rootPc: 4, homePc: 4, label: 'E Bati minor' })
     })
 
     test('a major song is Tizita major; a song can name its own scale', () => {
         expect(songScale({ tonic: 'Bb', mode: 'major' }).label).toBe('B♭ Tizita major')
         expect(songScale({ tonic: 'E', mode: 'minor', scaleId: 'TIZITA-2' }).label).toBe('E Tizita minor')
+    })
+
+    test('a song can be set to a scale from another start', () => {
+        // Aster Abebe's "Simihin Terahu": chords all in C major, home D: Tizita major from the 2nd
+        const song = { tonic: 'C', mode: 'major', manual: { scaleId: 'TIZITA-1', degree: 1, tonic: 'D' } }
+        expect(songScale(song)).toEqual({ scaleId: 'TIZITA-1', degree: 1, rootPc: 0, homePc: 2, label: 'D Tizita major 2nd' })
+    })
+
+    test('manual settings win over what the models found', () => {
+        const song = { beatsPerBar: 6, tonic: 'C', manual: { beatsPerBar: 3 } }
+        expect(withManual(song)).toMatchObject({ beatsPerBar: 3, tonic: 'C' })
+        expect(withManual({ beatsPerBar: 6 })).toEqual({ beatsPerBar: 6 })
     })
 
     test('no scale without a tonic', () => {

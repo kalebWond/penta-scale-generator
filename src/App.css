@@ -798,64 +798,289 @@ select {
   box-shadow: 0 0 0 3px rgba(242, 181, 68, 0.35);
 }
 
-/* ---------- song chords ----------
-   With a song open the panel takes the room: the video and the chord lane matter more
-   than a big keyboard, which shrinks to a strip showing the scale and the chord now. */
-
-.field--song {
-  max-width: 420px;
-}
-
-.song {
-  display: flex;
-  gap: 12px;
-  min-height: 0;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
+/* ---------- songs: one song ----------
+   The panel holds the song in a grid: the header, the chord now and the video's controls on the
+   left, a small video on the right, and the sliding track (the point of the page) under both.
+   The piano gets the rest of the height. YouTube requires an embedded player to be at least
+   200px by 200px, so the video is exactly that tall: what that saves goes to the track. */
 
 .piano--song {
   height: 100%;
 }
 
 .piano--song .piano__panel {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.piano--song .song {
-  flex: 1 1 auto;
+  flex: none;
 }
 
 .piano--song .piano__bed {
-  flex: 0 0 auto;
-  height: clamp(90px, 28vh, 240px);
+  min-height: 70px;
 }
 
-.song__video {
-  flex: 0 1 auto;
-  height: 100%;
-  aspect-ratio: 16 / 9;
-  max-width: 62%;
+.songview {
+  --video-w: clamp(240px, 28vw, 356px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--video-w);
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas:
+    "head     video"
+    "now      video"
+    "controls video"
+    "track    track";
+  gap: 8px 12px;
+}
+
+.songview__head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.songview__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.songview__now {
+  grid-area: now;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: 4px 18px;
+  min-width: 0;
+}
+
+.songview__side {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.songview__video {
+  grid-area: video;
+  width: var(--video-w);
+  height: max(200px, calc(var(--video-w) * 9 / 16));
   overflow: hidden;
   background: #000;
   border-radius: 7px;
 }
 
-.song__video iframe {
+.songview__video iframe {
   display: block;
   width: 100%;
   height: 100%;
   border: 0;
 }
 
-.lane {
+.songview__track {
+  grid-area: track;
+  min-width: 0;
+}
+
+.songview__controls {
+  grid-area: controls;
+  min-width: 0;
+}
+
+/* the video's own controls, drawn here (YouTube's are hidden) */
+.player {
   display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.player__btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.player__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.player__btn:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.player__btn--main {
+  width: 38px;
+  height: 38px;
+  color: var(--gold-ink);
+  background: linear-gradient(#f7c463, var(--gold));
+  border-color: transparent;
+}
+
+.player__btn .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.player__btn .icon--speaker {
+  width: 17px;
+}
+
+.player__btn .icon--skip {
+  width: 19px;
+  height: 19px;
+}
+
+.icon__stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.player__time {
+  flex: none;
+  min-width: 2.6em;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.player__time--total {
+  text-align: right;
+}
+
+/* a thin bar, gold up to where the video is */
+.player__seek,
+.player__volume {
+  --progress: 0%;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.player__seek {
+  flex: 1 1 auto;
+}
+
+/* The volume slider: hidden until the pointer is over the speaker (or it has keyboard focus),
+   then it stands up above it; it tucks away a moment after the pointer leaves. It's a normal
+   slider turned on its side, which works the same in every browser. */
+.player__sound {
+  position: relative;
+  flex: none;
+}
+
+.player__volume-pop {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 5;
+  width: 40px;
+  height: 122px;
+  padding-bottom: 8px;           /* a bridge, so the pointer can move up into it */
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s 0.5s, visibility 0s 0.7s;
+}
+
+.player__volume-pop::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.player__sound:hover .player__volume-pop,
+.player__sound:focus-within .player__volume-pop {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.player__volume {
+  position: absolute;
+  top: 57px;
+  left: 50%;
+  width: 90px;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* touch screens set volume with the phone's own buttons: just mute there */
+@media (pointer: coarse) {
+  .player__volume-pop {
+    display: none;
+  }
+}
+
+.icon--skip {
+  overflow: visible;
+}
+
+.icon__text {
+  font-family: var(--font-ui);
+  font-size: 6.4px;
+  font-weight: 700;
+  fill: currentColor;
+}
+
+.player__seek::-webkit-slider-runnable-track,
+.player__volume::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gold) var(--progress), var(--line) var(--progress));
+}
+
+.player__seek::-moz-range-track,
+.player__volume::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gold) var(--progress), var(--line) var(--progress));
+}
+
+.player__seek::-webkit-slider-thumb,
+.player__volume::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+  -webkit-appearance: none;
+}
+
+.player__seek::-moz-range-thumb,
+.player__volume::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.player__seek:disabled,
+.player__volume:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .lane__meta {
@@ -874,12 +1099,24 @@ select {
 /* Chord names use the text face, not the display one: Cinzel has no lowercase, so "Em"
    would read as "EM" and a minor chord would look major. */
 .lane__now {
+  min-width: 2.2em;
   font-family: var(--font-ui);
   font-weight: 700;
-  font-size: clamp(2.2rem, 10vh, 4.5rem);
+  font-size: clamp(2.4rem, 11vh, 4.5rem);
   line-height: 1;
   color: var(--gold);
   white-space: nowrap;
+}
+
+.lane__rest {
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.lane__rest .feature-icon {
+  width: 0.8em;
+  height: 0.8em;
 }
 
 .lane__beats {
@@ -905,32 +1142,116 @@ select {
   border-color: var(--gold);
 }
 
-.lane__next {
-  display: flex;
-  gap: 6px;
+.lane__nextname {
+  min-height: 1.2em;
   margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
-.lane__next .chip {
-  font-family: var(--font-ui);
-  font-weight: 700;
-}
-
-.lane__next .chip:disabled {
-  cursor: default;
-}
-
-.lane__next li:first-child .chip {
-  border-color: rgba(242, 181, 68, 0.6);    /* the next change */
+.lane__nextname b {
+  font-size: 1.1em;
+  color: var(--text);
 }
 
 .lane__warn {
+  flex-basis: 100%;
   margin: 0;
   font-size: 0.8rem;
   color: #f0a39b;
+}
+
+/* the sliding track: bars of beat cells, a gap between bars, a playhead */
+.track {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 7px;
+  background: #0d0d0f;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.track.is-playing {
+  scrollbar-width: none;      /* it's following the playhead; the bar would only flicker */
+}
+
+.track.is-playing::-webkit-scrollbar {
+  display: none;
+}
+
+.track__inner {
+  position: relative;
+  height: 84px;
+}
+
+/* Every cell is exactly one beat wide and they sit edge to edge: the beat lines are borders
+   inside the cells (box-sizing is border-box), so they take no room and the playhead moves at
+   an even speed. A bar starts with a stronger, gold line. */
+.track__cell {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: var(--beat-w);
+  padding: 0 0 0 7px;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 0;
+}
+
+.track__cell.is-bar {
+  border-left: 2px solid rgba(242, 181, 68, 0.7);
+}
+
+.track__cell.is-change {
+  overflow: visible;           /* a long name may run into the next, empty beat */
+  z-index: 1;
+}
+
+.track__cell.is-change {
+  background: #3d3729;
+}
+
+.track__cell.is-silence {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+}
+
+.track__cell .feature-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.track__cell.is-now {
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+.track__cell:hover {
+  filter: brightness(1.25);
+}
+
+.track__head {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(226, 87, 76, 0.8);
 }
 
 .song__msg {
@@ -944,29 +1265,141 @@ select {
   color: var(--text);
 }
 
-.song__list {
-  display: grid;
+/* ---------- songs: the library (search, picks, every song) ---------- */
+
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 1040px;
+  max-height: 100%;
+  margin: auto;
+  padding: 12px 14px 14px;
+  border-radius: 14px;
+  background:
+    linear-gradient(105deg, transparent 18%, rgba(255, 255, 255, 0.045) 38%, transparent 52%),
+    linear-gradient(#3c3c40, #1a1a1d 14%, #0e0e10 52%, #060607);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 2px 3px rgba(0, 0, 0, 0.5),
+    0 26px 50px rgba(0, 0, 0, 0.62);
+}
+
+.library__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.library__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+
+.library__search {
   flex: 1 1 auto;
-  gap: 6px;
-  max-height: 40vh;
+  min-width: 0;
+  max-width: 460px;
+  height: 38px;
+  margin-left: auto;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.library__search::placeholder {
+  color: var(--muted);
+}
+
+.library__body {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.library__section + .library__section {
+  margin-top: 14px;
+}
+
+.library__heading {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.songrow,
+.songgrid {
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
+  gap: 12px;
 }
 
-.song__title {
-  margin-right: auto;
-  min-width: 0;
+.songrow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(180px, 220px);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.songgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.songcard {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0 0 8px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: border-color 0.15s;
 }
 
-.song__key {
+.songcard:hover {
+  border-color: var(--gold);
+}
+
+.songcard__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.songcard__title {
+  display: -webkit-box;
+  margin: 2px 9px 0;
+  overflow: hidden;
   font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.songcard__meta {
+  margin: 0 9px;
+  font-size: 0.75rem;
   color: var(--muted);
-  white-space: nowrap;
 }
 
 /* ---------- similar scales sheet ---------- */
@@ -1263,25 +1696,117 @@ select {
     display: none;
   }
 
-  .piano--song .piano__bed {
-    height: clamp(64px, 24vh, 120px);
+  /* the track runs beside the video, which can't go below 200px tall */
+  .songview {
+    gap: 5px 8px;
+    grid-template-areas:
+      "head     video"
+      "now      video"
+      "controls video"
+      "track    video";
   }
 
-  .song {
-    gap: 8px;
-    padding-top: 4px;
+  .player {
+    flex-wrap: wrap;
+    gap: 2px 6px;
   }
 
-  .lane {
-    gap: 5px;
+  .player__btn {
+    width: 28px;
+    height: 28px;
   }
 
-  .lane__meta {
-    font-size: 0.75rem;
+  .player__btn--main {
+    width: 30px;
+    height: 30px;
+  }
+
+  .player__btn .icon--skip {
+    width: 17px;
+    height: 17px;
+  }
+
+  .player__time {
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+
+  .player__time:not(.player__time--total) {
+    margin-left: auto;
+  }
+
+  .player__time--total::before {
+    content: '/ ';
+  }
+
+  .player__seek {
+    order: 9;
+    flex-basis: 100%;
+    height: 14px;
+  }
+
+  .songview__title {
+    font-size: 0.8rem;
+  }
+
+  .songview__now {
+    gap: 2px 12px;
+  }
+
+  .lane__meta, .lane__nextname {
+    font-size: 0.72rem;
   }
 
   .lane__now {
-    font-size: clamp(1.6rem, 12vh, 2.6rem);
+    font-size: clamp(1.6rem, 10vh, 2.2rem);
+  }
+
+  /* kept compact so the column beside the video stays within its 200px */
+  .songview__side {
+    gap: 2px;
+  }
+
+  .lane__beats {
+    gap: 4px;
+    height: 8px;
+  }
+
+  .lane__beats i {
+    width: 8px;
+    height: 8px;
+  }
+
+  .track__inner {
+    height: 62px;
+  }
+
+  .track__cell {
+    top: 6px;
+    bottom: 6px;
+    padding-left: 5px;
+    font-size: 1.1rem;
+  }
+
+  .track__cell .feature-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .library {
+    gap: 8px;
+    padding: 8px 9px 10px;
+  }
+
+  .library__search, .library__head .btn {
+    height: 34px;
+  }
+
+  .songrow {
+    grid-auto-columns: minmax(150px, 170px);
+  }
+
+  .songgrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
   .home {
