@@ -24,12 +24,16 @@ ROOT = Path(__file__).resolve().parent.parent
 SONGS_DIR = ROOT / "public" / "songs"
 
 
+VIDEO_ID = r"[\w-]{11}"
+
+
 def video_id_from(arg):
-    m = re.search(r"(?:v=|youtu\.be/|/shorts/)([\w-]{11})", arg)
+    """A video id from an id or any common YouTube URL (watch, youtu.be, shorts, embed, live)."""
+    if re.fullmatch(VIDEO_ID, arg):
+        return arg
+    m = re.search(rf"(?:[?&]v=|youtu\.be/|/(?:shorts|embed|live|v)/)({VIDEO_ID})(?![\w-])", arg)
     if m:
         return m.group(1)
-    if re.fullmatch(r"[\w-]{11}", arg):
-        return arg
     sys.exit(f"Could not find a video id in: {arg}")
 
 
@@ -37,15 +41,36 @@ def ytdlp():
     return shutil.which("yt-dlp") or str(Path(sys.executable).parent / "yt-dlp")
 
 
+def parse_metadata(info):
+    """yt-dlp's JSON for one video -> (title, duration, embeddable).
+
+    embeddable is True, False, or None when YouTube did not say.
+    Raises ValueError for a video that cannot be analyzed.
+    """
+    if info.get("is_live"):
+        raise ValueError("it is a live stream")
+    duration = info.get("duration")
+    if not isinstance(duration, (int, float)) or duration <= 0:
+        raise ValueError("it has no duration (live stream or upcoming premiere?)")
+    embeddable = info.get("playable_in_embed")
+    return info.get("title") or info.get("id") or "", float(duration), (
+        embeddable if isinstance(embeddable, bool) else None)
+
+
 def fetch_metadata(video_id):
-    out = subprocess.run(
-        [ytdlp(), "--no-playlist", "--skip-download", "--print",
-         "%(title)s\t%(duration)s\t%(playable_in_embed)s",
-         f"https://www.youtube.com/watch?v={video_id}"],
-        capture_output=True, text=True, check=True,
-    ).stdout.strip().splitlines()[-1]
-    title, duration, embeddable = out.split("\t")
-    return title, float(duration), embeddable == "True"
+    proc = subprocess.run(
+        [ytdlp(), "--no-playlist", "-J", f"https://www.youtube.com/watch?v={video_id}"],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        lines = proc.stderr.strip().splitlines()
+        sys.exit(f"yt-dlp could not read {video_id}: {lines[-1] if lines else 'no output'}")
+    try:
+        return parse_metadata(json.loads(proc.stdout))
+    except json.JSONDecodeError:
+        sys.exit(f"yt-dlp returned unreadable metadata for {video_id}")
+    except ValueError as e:
+        sys.exit(f"Cannot analyze {video_id}: {e}")
 
 
 def download_audio(video_id, workdir):
@@ -81,6 +106,8 @@ def main():
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--keep-audio", action="store_true", help="do not delete the downloaded audio")
     ap.add_argument("--force", action="store_true", help="re-analyze even if the JSON already exists")
+    ap.add_argument("--allow-unembeddable", action="store_true",
+                    help="analyze even if the video cannot be embedded (the app cannot play it)")
     args = ap.parse_args()
 
     video_id = video_id_from(args.video)
@@ -88,18 +115,22 @@ def main():
     if out_path.exists() and not args.force:
         sys.exit(f"{out_path} already exists (use --force to re-analyze)")
 
-    os.nice(10)  # keep the machine usable while the models run
-    import torch
-    torch.set_num_threads(args.threads)
-
+    # Cheap checks first, so a bad video fails before any download or model loading.
     title, duration, embeddable = fetch_metadata(video_id)
-    print(f"{title} ({duration:.0f}s){'' if embeddable else '  [WARNING: embedding is disabled]'}")
+    if embeddable is False and not args.allow_unembeddable:
+        sys.exit(f"{title}: embedding is disabled, so the app cannot play it "
+                 "(use --allow-unembeddable to analyze anyway)")
+    note = "" if embeddable else "  [embedding is disabled]" if embeddable is False else "  [embedding unknown]"
+    print(f"{title} ({duration:.0f}s){note}")
 
+    os.nice(10)  # keep the machine usable while the models run
     workdir = tempfile.mkdtemp(prefix="chords-")  # a fresh, empty folder for the download
     try:
         t0 = time.time()
         wav = download_audio(video_id, workdir)
         print(f"downloaded in {time.time() - t0:.0f}s")
+        import torch
+        torch.set_num_threads(args.threads)
         t0 = time.time()
         beats, downbeats = run_beats(wav, args.checkpoint)
         print(f"beats in {time.time() - t0:.0f}s")

@@ -3,69 +3,98 @@
 Pure Python with no model or audio dependencies, so it is fast to test.
 Inputs are what the models return:
   - chords: [{"start_time", "end_time", "chord"}] with labels like "E:min7" or "D:maj/3"
-  - beats / downbeats: lists of times in seconds
+  - beats / downbeats: sorted lists of times in seconds
 
-A chord is reduced to (root pitch, "maj" | "min", bass pitch or None). The bass is kept
-so the app can show D/F# or, in simplified mode, just D.
+A chord is reduced to (root pitch, "maj" | "min" | "dim", bass pitch or None). The bass
+is kept so the app can show D/F# or, in simplified mode, just D.
 """
 from bisect import bisect_left
 from collections import Counter
 from statistics import median
 
-PITCH = {
-    "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3, "E": 4, "F": 5,
-    "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11,
-}
+LETTERS = "CDEFGAB"
+NATURAL = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+ACCIDENTAL = {0: "", 1: "#", 2: "##", 11: "b", 10: "bb"}
 SHARP_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 FLAT_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 FLAT_MAJOR_KEYS = {5, 10, 3, 8, 1, 6}  # F, Bb, Eb, Ab, Db, Gb
 
-# Harte bass intervals: "D:maj/3" means the bass is the 3rd of the chord.
+# Harte bass intervals, as (scale degree, semitones above the root).
+# "D:maj/3" means the bass is the 3rd of the chord: degree 3, 4 semitones -> F#.
 BASS_INTERVALS = {
-    "1": 0, "b2": 1, "2": 2, "#2": 3, "b3": 3, "3": 4, "4": 5, "#4": 6,
-    "b5": 6, "5": 7, "#5": 8, "b6": 8, "6": 9, "b7": 10, "7": 11,
+    "1": (1, 0), "b2": (2, 1), "2": (2, 2), "#2": (2, 3), "b3": (3, 3), "3": (3, 4),
+    "4": (4, 5), "#4": (4, 6), "b5": (5, 6), "5": (5, 7), "#5": (5, 8), "b6": (6, 8),
+    "6": (6, 9), "b7": (7, 10), "7": (7, 11),
 }
 
-# Chords that belong to a key, as (semitones above the tonic, quality).
-MAJOR_KEY = [(0, "maj"), (2, "min"), (4, "min"), (5, "maj"), (7, "maj"), (9, "min")]
-MINOR_KEY = [(0, "min"), (3, "maj"), (5, "min"), (7, "min"), (7, "maj"), (8, "maj"), (10, "maj")]
+MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
+MINOR_SCALE = [0, 2, 3, 5, 7, 8, 10]
 
+# Chords that belong to a key, as (semitones above the tonic, quality).
+# Minor includes the major V (harmonic minor) and ii°, so ii°-V-i counts as in key.
+MAJOR_KEY = [(0, "maj"), (2, "min"), (4, "min"), (5, "maj"), (7, "maj"), (9, "min"), (11, "dim")]
+MINOR_KEY = [(0, "min"), (2, "dim"), (3, "maj"), (5, "min"), (7, "min"), (7, "maj"), (8, "maj"),
+             (10, "maj")]
+
+QUALITY_SUFFIX = {"maj": "", "min": "m", "dim": "dim"}
 NO_CHORD = "N"
 
 
-def parse_chord(label):
-    """'D:maj/3' -> (2, 'maj', 6); 'E:min7' -> (4, 'min', None); 'N' / 'X' -> None.
-
-    Everything is reduced to major or minor. The bass is None when it is the root.
-    """
-    if not label or label in ("N", "X"):
+def name_pitch(name):
+    """'Bb' -> 10, 'E#' -> 5. None if it is not a note name."""
+    if not name or name[0] not in NATURAL or any(c not in "#b" for c in name[1:]):
         return None
+    return (NATURAL[name[0]] + name.count("#") - name.count("b")) % 12
+
+
+def spell_interval(root_name, degree, semitones):
+    """The note `degree` letters above root_name and `semitones` above it in pitch.
+
+    spell_interval("D", 3, 4) -> "F#"; spell_interval("C", 3, 3) -> "Eb".
+    """
+    letter = LETTERS[(LETTERS.index(root_name[0]) + degree - 1) % 7]
+    target = (name_pitch(root_name) + semitones) % 12
+    accidental = ACCIDENTAL.get((target - NATURAL[letter]) % 12)
+    return letter + accidental if accidental is not None else SHARP_NAMES[target]
+
+
+def _split_label(label):
+    """'D:maj/3' -> ('D', 'maj', '3'); 'C/E' -> ('C', 'maj', 'E')."""
     if ":" in label:
         root, _, rest = label.partition(":")
         quality, _, bass = rest.partition("/")
     else:
         root, _, bass = label.partition("/")
         quality = "maj"
-    if root not in PITCH:
+    return root, quality, bass
+
+
+def parse_chord(label):
+    """'D:maj/3' -> (2, 'maj', 6); 'E:min7' -> (4, 'min', None); 'N' / 'X' -> None.
+
+    Sevenths and extensions are dropped; diminished and half-diminished become 'dim'.
+    The bass is None when it is the root.
+    """
+    if not label or label in ("N", "X"):
         return None
-    pitch = PITCH[root]
-    minor = quality.startswith(("min", "dim", "hdim"))
+    root, quality, bass = _split_label(label)
+    pitch = name_pitch(root)
+    if pitch is None:
+        return None
+    if quality.startswith(("dim", "hdim")):
+        q = "dim"
+    elif quality.startswith("min"):
+        q = "min"
+    else:
+        q = "maj"
     bass_pitch = None
-    if bass in PITCH:
-        bass_pitch = PITCH[bass]
+    if name_pitch(bass) is not None:
+        bass_pitch = name_pitch(bass)
     elif bass in BASS_INTERVALS:
-        bass_pitch = (pitch + BASS_INTERVALS[bass]) % 12
+        bass_pitch = (pitch + BASS_INTERVALS[bass][1]) % 12
     if bass_pitch == pitch:
         bass_pitch = None
-    return pitch, ("min" if minor else "maj"), bass_pitch
-
-
-def note_name(pitch, flats=False):
-    return (FLAT_NAMES if flats else SHARP_NAMES)[pitch]
-
-
-def chord_name(pitch, quality, flats=False):
-    return note_name(pitch, flats) + ("m" if quality == "min" else "")
+    return pitch, q, bass_pitch
 
 
 def _nearest(arr, t):
@@ -74,58 +103,70 @@ def _nearest(arr, t):
     return min(candidates, key=lambda x: abs(x - t))
 
 
-def detect_tempo(beats):
+def median_ibi(beats):
+    """Median time between beats, or None with fewer than two beats."""
     ibi = [b - a for a, b in zip(beats, beats[1:])]
-    return 60.0 / median(ibi) if ibi else None
+    return median(ibi) if ibi else None
+
+
+def detect_tempo(beats):
+    ibi = median_ibi(beats)
+    return 60.0 / ibi if ibi else None
 
 
 def detect_beats_per_bar(beats, downbeats):
     counts = Counter()
     for a, b in zip(downbeats, downbeats[1:]):
-        counts[sum(1 for t in beats if a - 1e-3 <= t < b - 1e-3)] += 1
+        counts[bisect_left(beats, b - 1e-3) - bisect_left(beats, a - 1e-3)] += 1
     return counts.most_common(1)[0][0] if counts else 4
 
 
+# Without beats, model flicker is judged against this beat length.
+FALLBACK_IBI = 0.5
+
+
 def build_segments(raw_chords, beats, min_beats=0.6):
-    """Chords snapped to the beat grid, with repeats and too-short segments merged.
+    """Chords on the beat grid, with model flicker dropped and repeats merged.
 
-    Returns ([(start, chord | None)], end_time) where chord is (pitch, quality, bass).
-    A change of bass (D to D/F#) counts as a change.
+    Returns ([(start, chord | None, label)], end_time), where chord is
+    (pitch, quality, bass) and label is the model's raw label (kept for spelling).
+
+    - A raw segment shorter than min_beats is model flicker: it is dropped, and the
+      chord before it carries on. A real one-beat passing chord is kept.
+    - A start is snapped to the nearest beat only if one is within half a beat, so
+      chords in a rubato intro or outro, where no beats were found, keep their times.
+    - A change of bass (D to D/F#) counts as a change.
     """
-    parsed = [(s["start_time"], s["end_time"], parse_chord(s["chord"])) for s in raw_chords]
-    if not parsed:
+    if not raw_chords:
         return [], 0.0
-    end_time = parsed[-1][1]
-    ibi = median([b - a for a, b in zip(beats, beats[1:])]) if len(beats) > 1 else 0.5
+    end_time = raw_chords[-1]["end_time"]
+    ibi = median_ibi(beats) or FALLBACK_IBI
 
-    snapped = []
-    for start, _end, chord in parsed:
-        s = _nearest(beats, start) if beats else start
-        if snapped and abs(snapped[-1][0] - s) < 1e-6:
-            snapped.pop()  # two changes landed on one beat: the later one wins
-        snapped.append((s, chord))
+    kept = []
+    carry_start = None  # start of flicker dropped before the first kept chord
+    for seg in raw_chords:
+        start, end, label = seg["start_time"], seg["end_time"], seg["chord"]
+        if end - start < min_beats * ibi:
+            if not kept and carry_start is None:
+                carry_start = start
+            continue
+        if carry_start is not None:
+            start, carry_start = carry_start, None
+        kept.append((start, parse_chord(label), label))
 
-    def dedupe(items):
-        out = []
-        for s, chord in items:
-            if out and out[-1][1] == chord:
-                continue
-            out.append((s, chord))
-        return out
-
-    merged = dedupe(snapped)
-    # Absorb segments shorter than min_beats into the previous one.
-    changed = True
-    while changed and len(merged) > 1:
-        changed = False
-        for i in range(1, len(merged)):
-            nxt = merged[i + 1][0] if i + 1 < len(merged) else end_time
-            if nxt - merged[i][0] < min_beats * ibi:
-                del merged[i]
-                changed = True
-                break
-        merged = dedupe(merged)
-    return merged, end_time
+    segments = []
+    for start, chord, label in kept:
+        s = start
+        if beats:
+            b = _nearest(beats, start)
+            if abs(b - start) <= ibi / 2:
+                s = b
+        if segments and s <= segments[-1][0] + 1e-6:
+            segments.pop()  # two changes landed on one beat: the later one wins
+        if segments and segments[-1][1] == chord:
+            continue
+        segments.append((s, chord, label))
+    return segments, end_time
 
 
 def _key_set(tonic, mode):
@@ -138,7 +179,7 @@ def detect_key(segments, end_time):
     between a major key and its relative minor (G major / E minor share chords).
     Bass notes are ignored. Returns (tonic, mode, in_key_share) or None."""
     durations = Counter()
-    for i, (start, chord) in enumerate(segments):
+    for i, (start, chord, _label) in enumerate(segments):
         nxt = segments[i + 1][0] if i + 1 < len(segments) else end_time
         if chord is not None:
             durations[chord[:2]] += max(0.0, nxt - start)
@@ -158,6 +199,34 @@ def detect_key(segments, end_time):
     return tonic, mode, coverage
 
 
+def key_spelling(tonic, mode):
+    """The key's tonic name and {pitch: name} for its seven scale notes."""
+    flats = tonic in FLAT_MAJOR_KEYS if mode == "maj" else ((tonic + 3) % 12) in FLAT_MAJOR_KEYS
+    tonic_name = (FLAT_NAMES if flats else SHARP_NAMES)[tonic]
+    steps = MAJOR_SCALE if mode == "maj" else MINOR_SCALE
+    scale = {(tonic + st) % 12: spell_interval(tonic_name, i + 1, st) for i, st in enumerate(steps)}
+    return tonic_name, scale
+
+
+def spell_chord(chord, label, scale):
+    """Display names for one chord: (root + quality, bass or None).
+
+    A root in the key's scale takes the key's spelling; a chromatic root keeps the
+    model's own spelling (so a borrowed Bbm in E minor stays Bbm, not A#m). The bass
+    is spelled from the root by its interval (D:maj/3 -> F#, C:min/b3 -> Eb).
+    """
+    pitch, quality, bass = chord
+    model_root, _, bass_token = _split_label(label)
+    root = scale.get(pitch) or (model_root if name_pitch(model_root) == pitch else SHARP_NAMES[pitch])
+    bass_name = None
+    if bass is not None:
+        if name_pitch(bass_token) is not None:
+            bass_name = scale.get(bass) or bass_token
+        else:
+            bass_name = spell_interval(root, *BASS_INTERVALS[bass_token])
+    return root + QUALITY_SUFFIX[quality], bass_name
+
+
 def build_timeline(raw_chords, beats, downbeats):
     """Everything the app needs, from raw model output.
 
@@ -166,25 +235,23 @@ def build_timeline(raw_chords, beats, downbeats):
     """
     segments, end_time = build_segments(raw_chords, beats)
     key = detect_key(segments, end_time)
-    flats = False
-    key_name = tonic_name = mode_name = None
-    in_key = None
+    scale = {}
+    key_name = tonic_name = mode_name = in_key = None
     if key:
         tonic, mode, in_key = key
-        flats = tonic in FLAT_MAJOR_KEYS if mode == "maj" else ((tonic + 3) % 12) in FLAT_MAJOR_KEYS
-        key_name = chord_name(tonic, mode, flats)
-        tonic_name = note_name(tonic, flats)
+        tonic_name, scale = key_spelling(tonic, mode)
+        key_name = tonic_name + QUALITY_SUFFIX[mode]
         mode_name = "major" if mode == "maj" else "minor"
 
     chords = []
-    for start, chord in segments:
+    for start, chord, label in segments:
         if chord is None:
             chords.append({"t": round(start, 2), "c": NO_CHORD})
             continue
-        pitch, quality, bass = chord
-        entry = {"t": round(start, 2), "c": chord_name(pitch, quality, flats)}
-        if bass is not None:
-            entry["bass"] = note_name(bass, flats)
+        name, bass_name = spell_chord(chord, label, scale)
+        entry = {"t": round(start, 2), "c": name}
+        if bass_name is not None:
+            entry["bass"] = bass_name
         chords.append(entry)
 
     bpm = detect_tempo(beats)
