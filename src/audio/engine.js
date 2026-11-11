@@ -10,6 +10,7 @@ const STOP_TAU = 0.03
 let ctx = null
 let master = null
 const buffers = new Map()   // note name -> AudioBuffer
+const loading = new Map()   // note name -> in-flight fetch+decode, so overlapping loads share one request
 const latest = new Map()    // note name -> its newest voice { source, gain, startTime }
 const active = new Set()    // every voice that is scheduled or still sounding
 
@@ -42,16 +43,22 @@ export const isLoaded = (name) => buffers.has(name)
 
 // Fetches and decodes every sample in parallel, middle octave first so the most-used keys come up first.
 // `onSample(name)` fires as each one is ready; a failed sample is reported and skipped, never blocks the rest.
+// Safe to call again while a load is in flight (React StrictMode mounts effects twice in dev): every caller
+// gets its callbacks, but each sample is fetched once. A failed sample is retried by the next call.
 export function loadSamples(onSample, onError) {
     const c = getContext()
     const order = [...notes.slice(12, 24), ...notes.slice(0, 12), notes[24]]
     return Promise.all(order.map(async ({ name }) => {
         if (buffers.has(name)) return onSample && onSample(name)
+        if (!loading.has(name)) {
+            loading.set(name, (async () => {
+                const res = await fetch(files[name])
+                if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+                buffers.set(name, await c.decodeAudioData(await res.arrayBuffer()))
+            })().finally(() => loading.delete(name)))
+        }
         try {
-            const res = await fetch(files[name])
-            if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-            const data = await res.arrayBuffer()
-            buffers.set(name, await c.decodeAudioData(data))
+            await loading.get(name)
             onSample && onSample(name)
         } catch (e) {
             onError && onError(name, e)
