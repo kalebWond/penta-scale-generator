@@ -37,13 +37,18 @@ function App() {
     const [lit, setLit] = useState(() => new Set())           // sounding as part of a playing run
     const [step, setStep] = useState(null)
 
+    // `ignore` drops callbacks from a load whose effect was cleaned up (StrictMode's dev double-mount),
+    // so the count isn't incremented twice per sample. The engine dedupes the fetches themselves.
     useEffect(() => {
+        let ignore = false
         try {
-            loadSamples(() => setLoadedCount(n => n + 1), (name, e) => console.warn(`Sample ${name} failed`, e))
-                .then(() => setLoadDone(true))
+            loadSamples(() => { if (!ignore) setLoadedCount(n => n + 1) },
+                (name, e) => { if (!ignore) console.warn(`Sample ${name} failed`, e) })
+                .then(() => { if (!ignore) setLoadDone(true) })
         } catch (e) {
             setLoadError(e.message)     // no Web Audio
         }
+        return () => { ignore = true }
     }, [])
 
     const press = useCallback((index) => {

@@ -102,14 +102,14 @@ The keyboard is sized from its own height at a fixed aspect ratio rather than st
 ```bash
 npm install
 npm run dev        # dev server on http://localhost:3000
-npm test           # 21 tests across 3 suites
+npm test           # 23 tests across 3 suites
 npm run build      # production bundle into build/
 npm run preview    # serve that bundle locally
 ```
 
 The dev server also binds to your LAN address, so you can open it on a phone on the same network — handy, since the landscape and touch behaviour are the parts you can't check on a desktop.
 
-Built with **Vite**, tested with **Vitest**. The only runtime dependency is React itself — the whole bundle is about **48 kB of JavaScript and 3.5 kB of CSS**, gzipped.
+Built with **Vite**, tested with **Vitest**. The only runtime dependency is React itself — the whole bundle is about **75 kB of JavaScript and 8 kB of CSS**, gzipped.
 
 Needs a reasonably current browser: Web Audio, Pointer Events and CSS container queries.
 

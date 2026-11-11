@@ -1,5 +1,5 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 // All four families are picked in App.css; nothing here names them again.
 // The variable builds ship every weight in one file, so asking for 600 or 700
 // gets the real thing instead of a browser-synthesised bold.
@@ -10,9 +10,8 @@ import '@fontsource/noto-music';                 // supplies the ♭ no text fac
 import './index.css';
 import App from './App';
 
-ReactDOM.render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+  </StrictMode>
 );

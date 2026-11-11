@@ -45,6 +45,23 @@ test('loadSamples fetches and decodes all 25 samples, reporting each', async () 
     expect(engine.isLoaded('C3')).toBe(true)
 })
 
+test('overlapping loads (StrictMode double-mount) share one fetch per sample, and both report every sample', async () => {
+    const first = []
+    const second = []
+    await Promise.all([engine.loadSamples(n => first.push(n)), engine.loadSamples(n => second.push(n))])
+    expect(global.fetch).toHaveBeenCalledTimes(25)
+    expect(first).toHaveLength(25)
+    expect(second).toHaveLength(25)
+})
+
+test('a failed sample is retried by the next load', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 503, statusText: 'Unavailable' }))
+    await engine.loadSamples()
+    global.fetch = vi.fn(() => Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }))
+    await engine.loadSamples()
+    expect(engine.isLoaded('C3')).toBe(true)
+})
+
 test('a failing sample is reported and does not block the others', async () => {
     global.fetch = vi.fn(url => url.includes('Db3')
         ? Promise.resolve({ ok: false, status: 404, statusText: 'Not Found' })
