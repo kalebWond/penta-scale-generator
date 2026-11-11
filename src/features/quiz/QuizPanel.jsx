@@ -1,8 +1,8 @@
-import { notes } from '../music/notes'
-import { LEVELS } from '../quiz/levels'
-import { alsoKnownAs, distance } from '../quiz/questions'
-import { PlayIcon, StopIcon } from './icons'
-import { SpeedField } from './Toolbar'
+import { notes } from '../../music/notes'
+import { LEVELS } from './levels'
+import { alsoKnownAs, distance } from './questions'
+import { PlayIcon, StopIcon } from '../../components/icons'
+import SpeedField from '../../components/SpeedField'
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
@@ -29,7 +29,7 @@ function Feedback({ question, answer, items }) {
 // The panel above the keys in quiz mode: what to do, the answer buttons, and how you're doing.
 function QuizPanel({
     quiz, playing, speed, onSpeed, onStart, onReplay, onStop, onAnswer, onNext, onHearBoth,
-    onOpenProgress, modeSwitch,
+    onOpenProgress, nav,
 }) {
     const { question, answer, stats, items } = quiz
     const { level, streak, best } = stats.progress
@@ -37,8 +37,7 @@ function QuizPanel({
     return (
         <>
             <header className="toolbar">
-                <h1 className="brand">Penta<span>Scales</span></h1>
-                {modeSwitch}
+                {nav}
                 {!question ? (
                     <button type="button" className="btn btn--play" onClick={onStart}><PlayIcon /> Start</button>
                 ) : playing ? (

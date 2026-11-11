@@ -1,4 +1,4 @@
-import { DEGREES, getScale, rotate } from '../music/scales'
+import { DEGREES, getScale, rotate } from '../../music/scales'
 
 // What the quiz can ask about. Each entry names a scale and the degree it's played from.
 // Today that's every scale from the 1st. A variation -- a scale from another start position, or a

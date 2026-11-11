@@ -1,3 +1,5 @@
+import { FEATURES } from '../features/registry'
+
 // A row of mutually exclusive buttons (speed, start position, practice/quiz).
 function Segmented({ options, value, onChange, label, className = '' }) {
     return (
@@ -14,11 +16,7 @@ function Segmented({ options, value, onChange, label, className = '' }) {
 
 export default Segmented
 
-const MODES = [
-    { value: 'practice', label: 'Practice' },
-    { value: 'quiz', label: 'Quiz' },
-    { value: 'chords', label: 'Chords' },
-]
+const MODES = FEATURES.map(f => ({ value: f.id, label: f.label }))
 
 export function ModeSwitch({ mode, onMode }) {
     return <Segmented label="Mode" className="seg--mode" options={MODES} value={mode} onChange={onMode} />

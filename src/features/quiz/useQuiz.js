@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { QUIZ_ITEMS } from '../quiz/catalog'
-import { LEVELS } from '../quiz/levels'
-import { makeQuestion, sameSound } from '../quiz/questions'
-import { emptyStats, loadStats, recordAnswer, saveStats } from '../quiz/stats'
+import { QUIZ_ITEMS } from './catalog'
+import { LEVELS } from './levels'
+import { makeQuestion, sameSound } from './questions'
+import { emptyStats, loadStats, recordAnswer, saveStats } from './stats'
 
 // Quiz state: the current question, the answer given to it, and the saved stats.
 // `next()` returns the new question straight away so the caller can play it in the same tap.

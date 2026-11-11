@@ -1,4 +1,4 @@
-import { getScale } from '../music/scales'
+import { getScale } from '../../music/scales'
 
 // A song is the JSON that tools/analyze.py writes to public/songs/<videoId>.json:
 //   { videoId, title, duration, key, tonic, mode, bpm, beatsPerBar,

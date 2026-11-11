@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useYouTubePlayer } from '../hooks/useYouTubePlayer'
+import { useYouTubePlayer } from './useYouTubePlayer'
 import {
     beatInBar, displayChords, durationMismatch, formatTime, indexAt, pretty, songScale,
-} from '../songs/timeline'
+} from './timeline'
 
 const UPCOMING = 4
 const nameOf = (entry) => (entry?.name ? pretty(entry.name) : '—')
@@ -82,8 +82,8 @@ function SongList({ songs, onSelectSong }) {
     )
 }
 
-// The panel above the keys in chords mode.
-function ChordsPanel({ songs, songId, song, onSelectSong, simplify, onToggleSimplify, onChordChange, modeSwitch }) {
+// The panel above the keys for songs: the list, or one song playing.
+function SongsPanel({ songs, songId, song, onSelectSong, simplify, onToggleSimplify, onChordChange, nav }) {
     let body
     if (!songId) body = <SongList songs={songs} onSelectSong={onSelectSong} />
     else if (song.loading) body = <p className="song__msg">Loading chords…</p>
@@ -93,8 +93,7 @@ function ChordsPanel({ songs, songId, song, onSelectSong, simplify, onToggleSimp
     return (
         <>
             <header className="toolbar">
-                <h1 className="brand">Penta<span>Scales</span></h1>
-                {modeSwitch}
+                {nav}
                 <label className="field field--grow field--song">
                     <span className="field__label">Song</span>
                     <select value={songId ?? ''} onChange={e => onSelectSong(e.target.value || null)}>
@@ -117,4 +116,4 @@ function ChordsPanel({ songs, songId, song, onSelectSong, simplify, onToggleSimp
     )
 }
 
-export default ChordsPanel
+export default SongsPanel

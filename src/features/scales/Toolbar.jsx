@@ -1,20 +1,8 @@
-import { ROOTS } from '../music/notes'
-import { DEGREES, SCALES } from '../music/scales'
-import { PlayIcon, StopIcon } from './icons'
-import Segmented from './Segmented'
-
-export const SPEEDS = [
-    { value: 0.75, label: '0.75×' },
-    { value: 1, label: '1×' },
-    { value: 1.5, label: '1.5×' },
-]
-
-export const SpeedField = ({ speed, onSpeed }) => (
-    <div className="field">
-        <span className="field__label">Speed</span>
-        <Segmented label="Speed" options={SPEEDS} value={speed} onChange={onSpeed} />
-    </div>
-)
+import { ROOTS } from '../../music/notes'
+import { DEGREES, SCALES } from '../../music/scales'
+import { PlayIcon, StopIcon } from '../../components/icons'
+import Segmented from '../../components/Segmented'
+import SpeedField from '../../components/SpeedField'
 
 const blurAfter = (fn) => (e) => {
     fn(e.target.value)
@@ -23,12 +11,11 @@ const blurAfter = (fn) => (e) => {
 
 function Toolbar({
     rootPc, onRoot, scaleId, onScale, degree, onDegree, speed, onSpeed,
-    playing, onPlay, onStop, modeSwitch,
+    playing, onPlay, onStop, nav,
 }) {
     return (
         <header className="toolbar">
-            <h1 className="brand">Penta<span>Scales</span></h1>
-            {modeSwitch}
+            {nav}
 
             <label className="field">
                 <span className="field__label">Root</span>

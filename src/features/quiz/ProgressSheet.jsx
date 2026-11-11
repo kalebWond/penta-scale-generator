@@ -1,5 +1,5 @@
-import { LEVELS } from '../quiz/levels'
-import { topConfusions } from '../quiz/stats'
+import { LEVELS } from './levels'
+import { topConfusions } from './stats'
 
 // How the quiz is going: accuracy per scale and the pairs you mix up most. Saved in this browser.
 function ProgressSheet({ stats, items, onReset, onClose }) {

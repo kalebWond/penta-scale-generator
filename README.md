@@ -76,7 +76,7 @@ One subtlety worth knowing: the start positions are labelled **1st, 2nd, 5th, 6t
 
 ### 🎧 The quiz is data too
 
-`src/quiz/` is pure in the same way. What the quiz asks about is a list in `src/quiz/catalog.js`, and the difficulty ladder is a table in `src/quiz/levels.js`. To quiz a variation, add a line:
+`src/features/quiz/` is pure in the same way. What the quiz asks about is a list in `src/features/quiz/catalog.js`, and the difficulty ladder is a table in `src/features/quiz/levels.js`. To quiz a variation, add a line:
 
 ```js
 { scaleId: 'TIZITA-1', degree: 4 },   // "Tizita major from the 6th"
