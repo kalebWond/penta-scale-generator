@@ -22,6 +22,17 @@
   "pick": false
  },
  {
+  "videoId": "H-Y4BZpOkSw",
+  "title": "መች እረሳሁ",
+  "duration": 299.0,
+  "key": "E",
+  "tonic": "E",
+  "mode": "major",
+  "bpm": 166.7,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
   "videoId": "CocA4mTVKw4",
   "title": "ይኸው ልቤን YIHEW LIBEN ካሮል ፈቃዱ CAROL FEKADU Track 08",
   "duration": 427.0,
@@ -29,6 +40,17 @@
   "tonic": "E",
   "mode": "minor",
   "bpm": 120.0,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "RuHbBro5u2g",
+  "title": "ጌታ ነው በሕይወቴ",
+  "duration": 257.0,
+  "key": "C",
+  "tonic": "C",
+  "mode": "major",
+  "bpm": 166.7,
   "analyzedAt": "2026-11-12",
   "pick": false
  }
