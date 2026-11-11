@@ -1,11 +1,35 @@
 [
  {
+  "videoId": "zjFaUbC8chQ",
+  "title": "Track 11 Kemuse Yemilike | ከሙሴ የሚልቅ | Aster Abebe Vol 2",
+  "duration": 390.0,
+  "key": "Ab",
+  "tonic": "Ab",
+  "mode": "major",
+  "bpm": 166.7,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "v2ehvkpwPTo",
+  "title": "Track 18 Simihin Terahu | ስምህን ጠራሁ | Aster Abebe Vol 2",
+  "duration": 382.0,
+  "key": "C",
+  "tonic": "C",
+  "mode": "major",
+  "bpm": 136.4,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
   "videoId": "CocA4mTVKw4",
   "title": "ይኸው ልቤን YIHEW LIBEN ካሮል ፈቃዱ CAROL FEKADU Track 08",
   "duration": 427.0,
   "key": "Em",
   "tonic": "E",
   "mode": "minor",
-  "bpm": 120.0
+  "bpm": 120.0,
+  "analyzedAt": "2026-11-12",
+  "pick": false
  }
 ]
