@@ -43,7 +43,7 @@ const POLL_MS = 100
 export function useYouTubePlayer(containerRef, videoId) {
     const playerRef = useRef(null)
     const [status, setStatus] = useState({
-        ready: false, playing: false, duration: 0, error: null, muted: false, volume: 100,
+        ready: false, playing: false, duration: 0, error: null, muted: false, volume: 100, rate: 1,
     })
     const [time, setTime] = useState(0)
     // Right after a seek, YouTube can still report the old position once or twice; those
@@ -139,5 +139,13 @@ export function useYouTubePlayer(containerRef, videoId) {
         setStatus(s => ({ ...s, volume, muted: volume === 0 ? s.muted : false }))
     }, [])
 
-    return { ...status, time, seekTo, play, pause, setMuted, setVolume }
+    // Playback speed (1, 0.75, 0.5): for a musician working out a chord.
+    const setRate = useCallback((rate) => {
+        const player = playerRef.current
+        if (!player?.setPlaybackRate) return
+        player.setPlaybackRate(rate)
+        setStatus(s => ({ ...s, rate }))
+    }, [])
+
+    return { ...status, time, seekTo, play, pause, setMuted, setVolume, setRate }
 }

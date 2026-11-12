@@ -6,6 +6,10 @@
 //   POST   /api/ingest/file?name=&force=   (the file as the body)  one job
 //   DELETE /api/ingest/jobs/<id>       cancel a queued job or stop a running one
 //   GET    /local-songs/<file>         songs analyzed from files, and their audio (with Range)
+//   GET    /local-songs/models/<id>/<model>.json   a song as another chord model hears it
+//   GET|POST /.netlify/functions/corrections   musicians' corrections, as on the live site but
+//                                    stored in local-corrections/ (see netlify/shared/review.js)
+//   GET    /api/review-link?song=&name=   a share link for a musician to correct a song
 //
 // Jobs run one at a time (the models use every core), oldest first. A job's progress comes
 // from the "» <stage>" lines analyze.py prints. Uploads go to a temporary folder; analyze.py
@@ -15,10 +19,14 @@
 // BEAT_THIS_CHECKPOINT, a local Beat This! checkpoint (default ~/Downloads/final0.ckpt if there).
 
 import { spawn } from 'node:child_process'
-import { createReadStream, createWriteStream, existsSync, mkdtempSync, rmSync, statSync } from 'node:fs'
+import {
+    createReadStream, createWriteStream, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync,
+    statSync, writeFileSync,
+} from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { handleCorrections, reviewToken } from '../netlify/shared/review.js'
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const LOCAL_DIR = join(ROOT, 'local-songs')
@@ -26,6 +34,9 @@ const PYTHON = process.env.CHORD_PYTHON || join(homedir(), 'chord-env', 'bin', '
 const CHECKPOINT = process.env.BEAT_THIS_CHECKPOINT
     || [join(homedir(), 'Downloads', 'final0.ckpt')].find(p => existsSync(p))
 
+const CORRECTIONS_DIR = join(ROOT, 'local-corrections')
+const SITE = 'https://penta-scale.netlify.app'
+const DEV_SECRET = 'dev-only-review-secret'
 const MAX_UPLOAD = 300 * 1024 * 1024
 const KEEP_JOBS = 50
 const LOG_LINES = 40
@@ -212,10 +223,11 @@ function saveUpload(req, name) {
     })
 }
 
-// A file from local-songs/, with Range support so the audio player can seek.
+// A file from local-songs/, with Range support so the audio player can seek. Also the other
+// chord models' versions of a song, models/<song id>/<model>.json (written by analyze.py).
 function serveLocal(req, res, name) {
     const ext = extname(name).toLowerCase()
-    if (!/^[\w-]+\.[a-z0-9]+$/i.test(name) || !TYPES[ext]) return false
+    if (!/^(models\/[\w-]{11}\/)?[\w-]+\.[a-z0-9]+$/i.test(name) || !TYPES[ext]) return false
     const path = join(LOCAL_DIR, name)
     if (!existsSync(path)) return false
     const { size } = statSync(path)
@@ -245,7 +257,38 @@ function serveLocal(req, res, name) {
     return true
 }
 
-export default function ingest() {
+// The corrections store for dev: one JSON file per key ("current/<id>" -> current__<id>.json).
+const fileStore = {
+    file: (key) => join(CORRECTIONS_DIR, `${key.replaceAll('/', '__').replaceAll(':', '-')}.json`),
+    async get(key) {
+        const path = this.file(key)
+        return existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null
+    },
+    async set(key, value) {
+        mkdirSync(CORRECTIONS_DIR, { recursive: true })
+        writeFileSync(this.file(key), JSON.stringify(value))
+    },
+    async list(prefix) {
+        if (!existsSync(CORRECTIONS_DIR)) return []
+        const start = prefix.replaceAll('/', '__')
+        return readdirSync(CORRECTIONS_DIR).filter(f => f.startsWith(start) && f.endsWith('.json'))
+            .map(f => f.slice(0, -5).replaceAll('__', '/'))
+    },
+}
+
+// A connect request as a web Request, and a web Response written back, for the shared handler.
+async function toRequest(req) {
+    const body = req.method === 'POST' ? await readBody(req, 1024 * 1024) : undefined
+    return new Request(new URL(req.url, 'http://localhost'), { method: req.method, headers: req.headers, body })
+}
+async function sendResponse(res, response) {
+    res.statusCode = response.status
+    response.headers.forEach((value, key) => res.setHeader(key, value))
+    res.end(Buffer.from(await response.arrayBuffer()))
+}
+
+export default function ingest({ reviewSecret } = {}) {
+    const secret = reviewSecret || DEV_SECRET
     const queue = createQueue()
     const available = existsSync(PYTHON)
     const reason = available ? null
@@ -259,6 +302,20 @@ export default function ingest() {
                 const url = new URL(req.url, 'http://local')
                 const path = url.pathname
                 try {
+                    if (path === '/.netlify/functions/corrections') {
+                        return sendResponse(res, await handleCorrections(await toRequest(req), { store: fileStore, secret }))
+                    }
+                    if (path === '/api/review-link' && req.method === 'GET') {
+                        const song = url.searchParams.get('song')
+                        const token = reviewToken(secret, song, url.searchParams.get('name'))
+                        const linkPath = `/songs/${song}?review=${encodeURIComponent(token)}`
+                        return sendJson(res, 200, {
+                            path: linkPath,
+                            url: reviewSecret ? SITE + linkPath : null,
+                            warning: reviewSecret ? null
+                                : 'REVIEW_SECRET is not set in .env.local, so this link only works on this computer.',
+                        })
+                    }
                     if (path.startsWith('/local-songs/') && req.method === 'GET') {
                         if (serveLocal(req, res, decodeURIComponent(path.slice('/local-songs/'.length)))) return
                         if (path.endsWith('index.json')) return sendJson(res, 200, [])

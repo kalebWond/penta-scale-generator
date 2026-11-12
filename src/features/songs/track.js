@@ -56,7 +56,7 @@ export function barStarts(beats, downbeats, beatsPerBar) {
     return starts
 }
 
-// Cells: { t, end, bar, barStart, label, kind, name }
+// Cells: { t, end, bar, barStart, label, kind, name, edited }
 //   bar       which bar it belongs to (0-based); an intro or outro without beats is a bar of its own
 //   barStart  the first cell of its bar
 //   label     the chord name written in the cell, or null
@@ -65,6 +65,7 @@ export function barStarts(beats, downbeats, beatsPerBar) {
 //             'silence' no chord, at the very start or end of the song (drawn as an icon)
 //             null      nothing written
 //   name      the chord sounding as the cell starts ('' for none)
+//   edited    a musician's correction landed on this beat (see corrections.js)
 export function buildTrack(song, shown) {
     const beats = song.beats ?? []
     if (!beats.length) return []
@@ -82,6 +83,7 @@ export function buildTrack(song, shown) {
     const last = spans[spans.length - 1].end
     if (duration - last > EDGE) spans.push({ t: last, end: duration, newBar: true })
 
+    const editedTimes = song.editedTimes ?? []   // where a musician's corrections landed
     const atOrBefore = (t) => indexAt(shown, t, c => c.t)
     const firstChord = shown.findIndex(e => e.name)
     const lastChord = shown.findLastIndex(e => e.name)
@@ -103,7 +105,8 @@ export function buildTrack(song, shown) {
             // no chord: only worth marking before the first chord or after the last
             if (lastIn < firstChord || lastIn > lastChord) kind = 'silence'
         }
-        return { t: span.t, end: span.end, bar, barStart: span.newBar, label, kind, name: sounding?.name ?? '' }
+        const edited = editedTimes.some(t => t >= span.t - EPS && t < span.end - EPS)
+        return { t: span.t, end: span.end, bar, barStart: span.newBar, label, kind, name: sounding?.name ?? '', edited }
     })
 }
 

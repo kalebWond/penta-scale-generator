@@ -10,7 +10,7 @@ const POLL_MS = 100
 export function useAudioPlayer(src) {
     const audioRef = useRef(null)
     const [status, setStatus] = useState({
-        ready: false, playing: false, duration: 0, error: null, muted: false, volume: 100,
+        ready: false, playing: false, duration: 0, error: null, muted: false, volume: 100, rate: 1,
     })
     const [time, setTime] = useState(0)
 
@@ -79,5 +79,11 @@ export function useAudioPlayer(src) {
         setStatus(s => ({ ...s, volume, muted: volume === 0 ? s.muted : false }))
     }, [])
 
-    return { ...status, time, seekTo, play, pause, setMuted, setVolume }
+    const setRate = useCallback((rate) => {
+        if (!audioRef.current) return
+        audioRef.current.playbackRate = rate
+        setStatus(s => ({ ...s, rate }))
+    }, [])
+
+    return { ...status, time, seekTo, play, pause, setMuted, setVolume, setRate }
 }

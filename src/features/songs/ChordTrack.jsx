@@ -13,14 +13,24 @@ export const dropFocus = (e) => { if (e.detail > 0) e.currentTarget.blur() }
 
 // A beat cell. Which one is "now" and which are past is set on the DOM by ChordTrack, in step
 // with the playhead, so a cell only re-renders when the song or the simplify toggle changes.
-const Cell = memo(function Cell({ cell, left, onSeek }) {
+// In edit mode a tap selects the cell (the chord picker opens over it) instead of playing.
+const Cell = memo(function Cell({ cell, index, left, onSeek, onSelect, selected }) {
     const cls = [
         'track__cell',
         cell.barStart && 'is-bar',
         cell.kind && `is-${cell.kind}`,
+        cell.edited && 'is-edited',
+        selected && 'is-selected',
     ].filter(Boolean).join(' ')
+    const onClick = (e) => {
+        if (onSelect) onSelect(index, e.currentTarget.getBoundingClientRect())
+        else {
+            dropFocus(e)
+            onSeek(cell.t)
+        }
+    }
     return (
-        <button type="button" className={cls} style={{ left }} onClick={(e) => { dropFocus(e); onSeek(cell.t) }}
+        <button type="button" className={cls} style={{ left }} onClick={onClick}
             aria-label={`Bar ${cell.bar + 1}, ${cell.name ? pretty(cell.name) : 'no chord'}, ${formatTime(cell.t)}`}>
             {cell.kind === 'silence' ? <FeatureIcon name="songs" /> : cell.label && pretty(cell.label)}
         </button>
@@ -31,7 +41,7 @@ const Cell = memo(function Cell({ cell, left, onSeek }) {
 // keeps its place; paused, it can be scrolled freely. Tapping a beat jumps the video there.
 // The YouTube time arrives about ten times a second, so between reports the playhead runs on the
 // clock, which keeps the slide smooth; the lit cell follows the playhead, frame by frame.
-function ChordTrack({ cells, time, playing, onSeek, beatWidth }) {
+function ChordTrack({ cells, time, playing, onSeek, beatWidth, rate = 1, onSelect = null, selected = -1 }) {
     const scroller = useRef(null)
     const inner = useRef(null)
     const head = useRef(null)
@@ -89,7 +99,7 @@ function ChordTrack({ cells, time, playing, onSeek, beatWidth }) {
         let last = -Infinity
         const tick = () => {
             const { t, at } = clock.current
-            let est = t + Math.min(MAX_AHEAD, (performance.now() - at) / 1000)
+            let est = t + Math.min(MAX_AHEAD, rate * (performance.now() - at) / 1000)
             if (jumped.current) {
                 jumped.current = false
                 last = -Infinity
@@ -101,14 +111,15 @@ function ChordTrack({ cells, time, playing, onSeek, beatWidth }) {
         }
         frame = requestAnimationFrame(tick)
         return () => cancelAnimationFrame(frame)
-    }, [playing, place])
+    }, [playing, place, rate])
 
     return (
-        <div className={`track${playing ? ' is-playing' : ''}`} ref={scroller}
+        <div className={`track${playing ? ' is-playing' : ''}${onSelect ? ' is-editing' : ''}`} ref={scroller}
             style={{ '--beat-w': `${beatWidth}px` }} role="group" aria-label="Chords by bar and beat">
             <div className="track__inner" ref={inner} style={{ width: layout.width }}>
                 {cells.map((cell, i) => (
-                    <Cell key={i} cell={cell} left={layout.lefts[i]} onSeek={seek} />
+                    <Cell key={i} index={i} cell={cell} left={layout.lefts[i]} onSeek={seek}
+                        onSelect={onSelect} selected={i === selected} />
                 ))}
                 <div className="track__head" ref={head} aria-hidden="true" />
             </div>

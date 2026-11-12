@@ -32,3 +32,6 @@ __pycache__/
 /local-songs
 # the analysis tool's cache of raw model output
 /tools/.cache
+
+# musicians’ chord corrections made in dev (the live site keeps them in Netlify Blobs)
+/local-corrections

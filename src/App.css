@@ -820,12 +820,13 @@ select {
   --video-w: clamp(240px, 28vw, 356px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--video-w);
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto auto auto;
   grid-template-areas:
     "head     video"
     "now      video"
     "controls video"
-    "track    track";
+    "track    track"
+    "review   review";
   gap: 8px 12px;
 }
 
@@ -1729,7 +1730,8 @@ select {
       "head     video"
       "now      video"
       "controls video"
-      "track    video";
+      "track    video"
+      "review   review";
   }
 
   .player {
@@ -2164,4 +2166,273 @@ select {
   color: var(--muted);
   background: var(--surface);
   border-color: var(--line);
+}
+
+/* dev only: which chord model the song page shows (lv-chordia, BTC, BTC CL, ChordNet) */
+.songview__models {
+  flex: none;
+}
+
+.songview__models button {
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ---- Correcting chords: a musician's share link turns this on (see ReviewBar, ChordPicker) ---- */
+.songview__review {
+  grid-area: review;
+  min-width: 0;
+}
+
+.lane__checked {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* edited beats are outlined while correcting, not for everyone else */
+.track.is-editing .track__cell.is-edited {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+
+.track__cell.is-selected {
+  box-shadow: inset 0 0 0 2px var(--gold);
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+}
+
+.seg--small button {
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 0.78rem;
+}
+
+.review {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.review__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.review__who {
+  margin-right: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.review__who b {
+  color: var(--text);
+}
+
+.review__count {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.review__publish {
+  color: var(--gold-ink);
+  background: var(--gold);
+}
+
+.review__hint,
+.review__msg {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.review__msg {
+  color: var(--green);
+}
+
+.review__msg--error {
+  color: var(--red);
+}
+
+.review__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.review__details label {
+  display: grid;
+  gap: 3px;
+}
+
+.review__details select,
+.review__details textarea,
+.picker__bass select {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.review__shift {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review__shift b {
+  min-width: 9em;
+  text-align: center;
+  color: var(--text);
+}
+
+.review__note {
+  flex: 1 1 260px;
+}
+
+.review__note textarea {
+  resize: vertical;
+}
+
+/* the chord picker floats over the track, above the beat it's for */
+.picker {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+
+.picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.picker__head b {
+  color: var(--text);
+}
+
+.picker__close {
+  width: 28px;
+  height: 28px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+}
+
+.picker__group {
+  display: grid;
+  gap: 5px;
+}
+
+.picker__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.picker__chips,
+.picker__roots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.picker__chip,
+.picker__root {
+  min-width: 42px;
+  height: 34px;
+  padding: 0 10px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.picker__chip:hover,
+.picker__root:hover {
+  border-color: var(--gold);
+}
+
+.picker__chip--hint small {
+  margin-left: 4px;
+  font-weight: 400;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.picker__root {
+  min-width: 38px;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+
+.picker__root[aria-pressed='true'] {
+  color: var(--gold-ink);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.picker__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker__row--end {
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.picker__bass {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.picker__use {
+  margin-left: auto;
+  color: var(--gold-ink);
+  background: var(--gold);
+}
+
+.picker__use:disabled {
+  color: var(--muted);
+  background: var(--surface-2);
 }

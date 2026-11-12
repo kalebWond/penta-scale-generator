@@ -93,3 +93,15 @@ export const useSong = (songId) => useWithManual(useLoad(songId, () => getFirstJ
 
 // Where a song's own audio is served (songs from files only).
 export const audioUrl = (song) => (song?.source === 'file' && song.audio ? `/local-songs/${song.audio}` : null)
+
+// Other chord models (dev only): analyze.py writes each song as ChordMini's models hear it, on
+// the same beats, to local-songs/models/<id>/. `useChordModels` lists them
+// ([{ model, label, key, chords }], empty without any); `useSongInModel` loads one.
+export const useChordModels = (songId) => useLoad(LOCAL && songId ? `models:${songId}` : null,
+    () => getJson(`/local-songs/models/${songId}/index.json`).catch(() => []))
+
+export const useSongInModel = (songId, model) => useLoad(LOCAL && songId && model ? `model:${songId}:${model}` : null,
+    () => getJson(`/local-songs/models/${songId}/${model}.json`))
+
+// What a model's version replaces in a song: the analysis, not the song itself.
+export const TIMELINE_FIELDS = ['key', 'tonic', 'mode', 'bpm', 'beatsPerBar', 'inKeyShare', 'chords', 'beats', 'downbeats']

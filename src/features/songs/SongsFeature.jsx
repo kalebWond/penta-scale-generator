@@ -2,21 +2,55 @@ import { useMemo, useState } from 'react'
 import Piano, { NO_ROLES, rolesFor } from '../../components/Piano'
 import { useStickyState } from '../../hooks/useStickyState'
 import { getScaleRun } from '../../music/scales'
+import { applyCorrections } from './corrections'
 import SongLibrary from './SongLibrary'
 import SongView from './SongView'
-import { chordKeys, songScale } from './timeline'
-import { useSong, useSongIndex } from './useSongs'
+import { chordKeys, songScale, withManual } from './timeline'
+import { usePublishedCorrections, useDraft, useReviewToken } from './useReview'
+import { TIMELINE_FIELDS, useChordModels, useSong, useSongIndex, useSongInModel } from './useSongs'
+
+const MAIN_MODEL = { value: 'lv', label: 'lv-chordia' }
+
+// Dev only: the song as another chord model hears it (same beats, same rules), to compare models
+// by ear. The choice is remembered across songs; a song without that model shows the main one.
+function useModelChoice(songId, song) {
+    const [choice, setChoice] = useStickyState('songs.chordModel', MAIN_MODEL.value)
+    const models = useChordModels(songId)
+    const listed = models.data ?? []
+    const active = listed.some(m => m.model === choice) ? choice : null
+    const version = useSongInModel(songId, active)
+    const options = listed.length ? [MAIN_MODEL, ...listed.map(m => ({ value: m.model, label: m.label }))] : []
+    let shown = song
+    if (song && active && version.data) {
+        const timeline = Object.fromEntries(TIMELINE_FIELDS.map(k => [k, version.data[k]]))
+        shown = withManual({ ...song, ...timeline })
+    }
+    return { song: shown, options, value: active ?? MAIN_MODEL.value, onChange: setChoice }
+}
 
 function SongPlayer({ instrument, nav, songId, go }) {
     const song = useSong(songId)
+    const model = useModelChoice(songId, song.data)
     const [simplify, setSimplify] = useStickyState('songs.simplify', false)
+
+    // A musician's corrections go over the main model's chords: the published ones, or, while
+    // they're correcting (opened from their share link), their draft as it stands.
+    const token = useReviewToken(songId)
+    const published = usePublishedCorrections(songId, song.data?.corrections)
+    const review = useDraft(songId, token, published.corrections, published.loaded, published.reload)
+    const onMainModel = model.value === MAIN_MODEL.value
+    const reviewing = Boolean(token) && onMainModel && review.ready
+    const shown = useMemo(() => {
+        if (!model.song || !onMainModel) return model.song
+        return applyCorrections(model.song, reviewing ? review.draft : published.corrections)
+    }, [model.song, onMainModel, reviewing, review.draft, published.corrections])
     const [currentChord, setCurrentChord] = useState(null)
 
     const roles = useMemo(() => {
-        const scale = songScale(song.data)
+        const scale = songScale(shown)
         // from the song's start degree, so its home note is the one marked as the start
         return scale ? rolesFor(getScaleRun(scale.scaleId, scale.degree, scale.rootPc).keys) : NO_ROLES
-    }, [song.data])
+    }, [shown])
     const lit = useMemo(() => new Set(chordKeys(currentChord)), [currentChord])
 
     let panel
@@ -33,7 +67,9 @@ function SongPlayer({ instrument, nav, songId, go }) {
         )
     } else {
         panel = (
-            <SongView key={songId} song={song.data} nav={nav} onAllSongs={() => go('songs')}
+            <SongView key={songId} song={shown} nav={nav} onAllSongs={() => go('songs')}
+                models={model.options} model={model.value} onModel={model.onChange}
+                review={reviewing ? review : null} reviewer={token?.slice(0, token.lastIndexOf('~'))}
                 simplify={simplify} onToggleSimplify={() => setSimplify(v => !v)}
                 onChordChange={setCurrentChord} />
         )
