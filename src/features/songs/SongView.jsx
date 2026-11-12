@@ -3,6 +3,8 @@ import { FeatureIcon } from '../../components/icons'
 import ChordTrack from './ChordTrack'
 import PlayerControls from './PlayerControls'
 import { buildTrack } from './track'
+import { useAudioPlayer } from './useAudioPlayer'
+import { audioUrl } from './useSongs'
 import { useYouTubePlayer } from './useYouTubePlayer'
 import {
     beatInBar, displayChords, durationMismatch, formatTime, indexAt, pretty, songScale,
@@ -43,9 +45,14 @@ function useSpaceToPlay(yt) {
 
 // One song, in the panel above the keys. Left: the header, the chord now (big), the beat, the
 // next chord and the video's controls. Right: the video, small. Underneath: the sliding track.
+// A song from an audio file (dev only) plays that file instead, with the same controls, and
+// shows a card where the video would be.
 function SongView({ song, simplify, onToggleSimplify, onChordChange, onAllSongs, nav }) {
     const videoRef = useRef(null)
-    const yt = useYouTubePlayer(videoRef, song.videoId)
+    const fileSrc = audioUrl(song)
+    const video = useYouTubePlayer(videoRef, fileSrc ? null : song.videoId)
+    const file = useAudioPlayer(fileSrc)
+    const yt = fileSrc ? file : video
     const compact = useCompact()
     useSpaceToPlay(yt)
 
@@ -66,9 +73,9 @@ function SongView({ song, simplify, onToggleSimplify, onChordChange, onAllSongs,
 
     const warnings = [
         yt.error,
-        song.embeddable === false && 'YouTube does not allow this video to be played outside YouTube.',
-        durationMismatch(song, yt.duration) && `This video is ${formatTime(yt.duration)} long, but the chords `
-            + `were made from a ${formatTime(song.duration)} version, so they may not line up.`,
+        !fileSrc && song.embeddable === false && 'YouTube does not allow this video to be played outside YouTube.',
+        durationMismatch(song, yt.duration) && `This ${fileSrc ? 'file' : 'video'} is ${formatTime(yt.duration)} `
+            + `long, but the chords were made from a ${formatTime(song.duration)} version, so they may not line up.`,
     ].filter(Boolean)
 
     // Before the first chord and after the last there's nothing to play: a note, not a dash.
@@ -109,7 +116,14 @@ function SongView({ song, simplify, onToggleSimplify, onChordChange, onAllSongs,
                 <PlayerControls yt={yt} />
             </div>
 
-            <div className="songview__video" ref={videoRef} />
+            {fileSrc ? (
+                <div className="songview__video songview__video--file" title={song.audio}>
+                    <FeatureIcon name="songs" />
+                    <span>Audio file</span>
+                </div>
+            ) : (
+                <div className="songview__video" ref={videoRef} />
+            )}
 
             <div className="songview__track">
                 {cells.length > 0 && (

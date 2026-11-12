@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import { FeatureIcon } from '../../components/icons'
 import { useStickyState } from '../../hooks/useStickyState'
+import AddSongs from './AddSongs'
 import { recommendedSongs, searchSongs, thumbnailUrl } from './library'
 import { formatTime, songScale } from './timeline'
 
@@ -8,8 +10,15 @@ function SongCard({ song, onOpen }) {
     return (
         <li>
             <button type="button" className="songcard" onClick={() => onOpen(song.videoId)}>
-                <img className="songcard__thumb" src={thumbnailUrl(song.videoId)} alt="" loading="lazy"
-                    width="320" height="180" />
+                {song.source === 'file' ? (
+                    <span className="songcard__thumb songcard__thumb--file" aria-hidden="true">
+                        <FeatureIcon name="songs" />
+                        <span>Audio file</span>
+                    </span>
+                ) : (
+                    <img className="songcard__thumb" src={thumbnailUrl(song.videoId)} alt="" loading="lazy"
+                        width="320" height="180" />
+                )}
                 <span className="songcard__title">{song.title}</span>
                 <span className="songcard__meta">
                     {scale?.label ?? song.key}{song.duration ? ` · ${formatTime(song.duration)}` : ''}
@@ -42,7 +51,7 @@ function SongLibrary({ songs, onOpen, nav }) {
     let body
     if (songs.loading) body = <p className="song__msg">Loading songs…</p>
     else if (songs.error) body = <p className="song__msg">The song list could not be loaded ({songs.error}).</p>
-    else if (!all.length) body = <p className="song__msg">No songs yet. Analyze one with <code>tools/analyze.py</code>.</p>
+    else if (!all.length) body = <p className="song__msg">No songs yet.</p>
     else if (searching) {
         body = results.length
             ? <SongShelf title={`${results.length} ${results.length === 1 ? 'song' : 'songs'}`} songs={results} onOpen={onOpen} />
@@ -64,7 +73,10 @@ function SongLibrary({ songs, onOpen, nav }) {
                 <input type="search" className="library__search" value={query} placeholder="Search songs, artists or scales"
                     aria-label="Search songs" onChange={e => setQuery(e.target.value)} />
             </header>
-            <div className="library__body">{body}</div>
+            <div className="library__body">
+                {import.meta.env.DEV && <AddSongs onOpen={onOpen} />}
+                {body}
+            </div>
         </main>
     )
 }
