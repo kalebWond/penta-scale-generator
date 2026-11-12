@@ -11,6 +11,8 @@ const STAGES = {
     converting: 'Reading the file',
     beats: 'Finding the beats',
     chords: 'Finding the chords',
+    notes: 'Listening for the notes',
+    'other models': 'Trying the other chord models',
     processing: 'Building the chord track',
     saving: 'Saving',
 }

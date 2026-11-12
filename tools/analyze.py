@@ -30,12 +30,16 @@ import time
 from datetime import date
 from pathlib import Path
 
+import chordmini
 import postprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 SONGS_DIR = ROOT / "public" / "songs"
 LOCAL_DIR = ROOT / "local-songs"
 RAW_DIR = ROOT / "tools" / ".cache" / "raw"
+# Each song as other chord models hear it (ChordMini's BTC, BTC CL, ChordNet), on the same beats,
+# for the dev app's chord-model switch: local-songs/models/<id>/<model>.json. Not deployed.
+MODELS_DIR = LOCAL_DIR / "models"
 
 
 def stage(name):
@@ -101,7 +105,7 @@ OPTIONAL_FIELDS = ("source", "audio", "manual")   # left out of the list when no
 #   "manual": {...}  what the models can't tell, e.g. {"beatsPerBar": 3} for a 6/8 song the beat
 #                    model counted in 6, or {"scaleId": "TIZITA-1", "degree": 1, "tonic": "D"}
 #                    for Tizita major from the 2nd (see src/features/songs/timeline.js)
-HAND_SET = ("pick", "manual")
+HAND_SET = ("pick", "manual", "corrections")
 
 
 def write_index(songs_dir):
@@ -206,6 +210,10 @@ def main():
     ap.add_argument("--force", action="store_true", help="re-analyze even if the song already exists")
     ap.add_argument("--allow-unembeddable", action="store_true",
                     help="analyze even if the video cannot be embedded (the app cannot play it)")
+    ap.add_argument("--no-other-models", action="store_true",
+                    help="run only lv-chordia, not ChordMini's models (they run when ChordMini is set up)")
+    ap.add_argument("--add-models", action="store_true",
+                    help="for an analyzed song: fetch its audio again and run only ChordMini's models")
     args = ap.parse_args()
 
     if args.reindex:
@@ -217,6 +225,10 @@ def main():
 
     if args.reprocess:
         reprocess(args)
+        return
+
+    if args.add_models:
+        add_models(args)
         return
 
     if args.file:
@@ -270,6 +282,9 @@ def main():
         t0 = time.time()
         raw = run_chords(wav)
         print(f"chords in {time.time() - t0:.0f}s", flush=True)
+        save_notes(song_id, wav)
+        if not args.no_other_models:
+            run_other_models(song_id, wav)
     finally:
         if args.keep_audio:
             print(f"audio kept in {workdir}")
@@ -283,6 +298,134 @@ def main():
         out_dir.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, out_dir / base["audio"])
     save(out_path, base, raw, beats, downbeats)
+    write_model_versions(song_id, base, beats, downbeats)
+
+
+CHROMA_HOP = 2048   # about 10.8 frames a second at 22.05 kHz
+
+
+def save_notes(song_id, wav):
+    """Which notes sound, about ten times a second, cached for the chord referee (referee.py):
+    "chroma" from the harmonic part of the whole mix, "bass" from the two lowest octaves
+    (C1-B2), each frame 12 numbers (C .. B) from 0 to 99. A few hundred KB per song, so songs
+    can be re-judged later without their audio."""
+    import librosa
+    import numpy as np
+    stage("notes")
+    y, sr = librosa.load(wav, sr=22050, mono=True)
+    harmonic = librosa.effects.harmonic(y)
+    chroma = librosa.feature.chroma_cqt(y=harmonic, sr=sr, hop_length=CHROMA_HOP)
+    bass = librosa.feature.chroma_cqt(y=harmonic, sr=sr, hop_length=CHROMA_HOP,
+                                      fmin=librosa.note_to_hz("C1"), n_octaves=2)
+    to_ints = lambda m: np.rint(np.clip(m, 0, 1) * 99).astype(int).T.tolist()
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    (RAW_DIR / f"{song_id}.notes.json").write_text(json.dumps(
+        {"fps": sr / CHROMA_HOP, "chroma": to_ints(chroma), "bass": to_ints(bass)}, separators=(",", ":")))
+
+
+def run_other_models(song_id, wav):
+    """Run each of ChordMini's models on the audio and cache its chords (skipped, with a note,
+    when ChordMini isn't set up)."""
+    why = chordmini.available()
+    if why:
+        print(f"other chord models skipped: {why}", flush=True)
+        return
+    stage("other models")
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    for name in chordmini.MODELS:
+        t0 = time.time()
+        try:
+            segments = chordmini.run(name, wav)
+        except RuntimeError as e:
+            print(f"warning: {e}", flush=True)
+            continue
+        (RAW_DIR / f"{song_id}.{name}.json").write_text(json.dumps({"chords": segments}, separators=(",", ":")))
+        print(f"{chordmini.MODELS[name][2]} chords in {time.time() - t0:.0f}s", flush=True)
+
+
+def write_model_versions(song_id, base, beats, downbeats):
+    """The song as each cached ChordMini model hears it: the same post-processing on the same
+    beats, so the chords are the only difference. Plus an index the app reads."""
+    versions = []
+    for name, (_, _, label) in chordmini.MODELS.items():
+        cache = RAW_DIR / f"{song_id}.{name}.json"
+        if not cache.exists():
+            continue
+        chords = json.loads(cache.read_text())["chords"]
+        result = dict(base, model=name, modelLabel=label)
+        result.update(postprocess.build_timeline(chords, beats, downbeats))
+        folder = MODELS_DIR / song_id
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{name}.json").write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+        versions.append({"model": name, "label": label, "key": result["key"], "chords": len(result["chords"])})
+    if versions:
+        (MODELS_DIR / song_id / "index.json").write_text(json.dumps(versions, ensure_ascii=False))
+        print("other models: " + ", ".join(f"{v['label']} key {v['key']}, {v['chords']} chords" for v in versions),
+              flush=True)
+
+
+def model_suggestions(song_id, beats, downbeats):
+    """What the other chord models heard, compact, for the correction editor's suggestions:
+    {"btc-cl": [[t, "D/F#"], ...], ...}. The same post-processing as the main chords."""
+    out = {}
+    for name in chordmini.MODELS:
+        cache = RAW_DIR / f"{song_id}.{name}.json"
+        if cache.exists():
+            timeline = postprocess.build_timeline(json.loads(cache.read_text())["chords"], beats, downbeats)
+            out[name] = [[c["t"], c["c"] + ("/" + c["bass"] if "bass" in c else "")] for c in timeline["chords"]]
+    return out
+
+
+def add_suggestions(out_path, song_id, beats, downbeats):
+    """Put the other models' chords into a song's file (after they've run on it)."""
+    song = json.loads(out_path.read_text())
+    suggestions = model_suggestions(song_id, beats, downbeats)
+    if suggestions:
+        song["suggestions"] = suggestions
+        out_path.write_text(json.dumps(song, ensure_ascii=False, separators=(",", ":")))
+
+
+def find_song(song_id, folders):
+    """(path, data) of an analyzed song, or exit."""
+    path = next((f / f"{song_id}.json" for f in folders if (f / f"{song_id}.json").exists()), None)
+    if path is None:
+        sys.exit(f"No song {song_id}")
+    return path, json.loads(path.read_text())
+
+
+def add_models(args):
+    """For a song already analyzed: get its audio again and run only ChordMini's models."""
+    if not args.video:
+        sys.exit("--add-models needs the song's id")
+    why = chordmini.available()
+    if why:
+        sys.exit(why)
+    song_id = args.video if re.fullmatch(VIDEO_ID, args.video) else video_id_from(args.video)
+    cache = RAW_DIR / f"{song_id}.json"
+    if not cache.exists():
+        sys.exit(f"No cached model output for {song_id}: analyze it with --force first")
+    song_path, song = find_song(song_id, [Path(args.out)] if args.out else [SONGS_DIR, LOCAL_DIR])
+    print(f"{song['title']} ({song['duration']:.0f}s)", flush=True)
+    workdir = tempfile.mkdtemp(prefix="chords-")
+    try:
+        if song.get("source") == "file":
+            stage("converting")
+            wav = convert_audio(LOCAL_DIR / song["audio"], workdir)
+        else:
+            stage("downloading")
+            wav = download_audio(song_id, workdir)
+        save_notes(song_id, wav)
+        run_other_models(song_id, wav)
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    raw = json.loads(cache.read_text())
+    write_model_versions(song_id, song_base(song), raw["beats"], raw["downbeats"])
+    add_suggestions(song_path, song_id, raw["beats"], raw["downbeats"])
+
+
+def song_base(song):
+    """What a song's file says about the song itself, apart from the analysis."""
+    return {k: song[k] for k in ("videoId", "source", "audio", "title", "duration", "embeddable") if k in song}
 
 
 def save(out_path, base, raw, beats, downbeats):
@@ -296,6 +439,9 @@ def save(out_path, base, raw, beats, downbeats):
         except (OSError, json.JSONDecodeError):
             pass
     result.update(postprocess.build_timeline(raw, beats, downbeats))
+    suggestions = model_suggestions(base["videoId"], beats, downbeats)
+    if suggestions:
+        result["suggestions"] = suggestions
 
     stage("saving")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -315,17 +461,13 @@ def reprocess(args):
     cache = RAW_DIR / f"{song_id}.json"
     if not cache.exists():
         sys.exit(f"No cached model output for {song_id}: analyze it with --force first")
-    folders = [Path(args.out)] if args.out else [SONGS_DIR, LOCAL_DIR]
-    out_path = next((f / f"{song_id}.json" for f in folders if (f / f"{song_id}.json").exists()), None)
-    if out_path is None:
-        sys.exit(f"No song {song_id} to reprocess")
-    before = json.loads(out_path.read_text())
-    base = {k: before[k] for k in ("videoId", "source", "audio", "title", "duration", "embeddable")
-            if k in before}
+    out_path, before = find_song(song_id, [Path(args.out)] if args.out else [SONGS_DIR, LOCAL_DIR])
+    base = song_base(before)
     if args.title:
         base["title"] = args.title
     raw = json.loads(cache.read_text())
     save(out_path, base, raw["chords"], raw["beats"], raw["downbeats"])
+    write_model_versions(song_id, base, raw["beats"], raw["downbeats"])
 
 
 if __name__ == "__main__":
