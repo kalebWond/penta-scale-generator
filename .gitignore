@@ -27,3 +27,8 @@ yarn-error.log*
 
 # python
 __pycache__/
+
+# songs analyzed from local audio files, and their audio (served by the dev server only)
+/local-songs
+# the analysis tool's cache of raw model output
+/tools/.cache
