@@ -1,4 +1,4 @@
-// A row of mutually exclusive buttons (speed, start position, practice/quiz).
+// A row of mutually exclusive buttons (speed, start position).
 function Segmented({ options, value, onChange, label, className = '' }) {
     return (
         <div className={`seg ${className}`} role="group" aria-label={label}>
@@ -13,12 +13,3 @@ function Segmented({ options, value, onChange, label, className = '' }) {
 }
 
 export default Segmented
-
-const MODES = [
-    { value: 'practice', label: 'Practice' },
-    { value: 'quiz', label: 'Quiz' },
-]
-
-export function ModeSwitch({ mode, onMode }) {
-    return <Segmented label="Mode" className="seg--mode" options={MODES} value={mode} onChange={onMode} />
-}

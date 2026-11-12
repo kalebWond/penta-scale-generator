@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { notes } from '../music/notes'
-import { findEquivalentScales, formatStep } from '../music/scales'
-import { PlayIcon } from './icons'
+import { notes } from '../../music/notes'
+import { findEquivalentScales, formatStep } from '../../music/scales'
+import { PlayIcon } from '../../components/icons'
 
 // The same interval pattern shows up under different names depending on where you start,
 // e.g. Tizita major from the 6th is Bati minor from the 1st. Tapping an entry loads it

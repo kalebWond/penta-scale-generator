@@ -4,6 +4,9 @@
     <loc>https://penta-scale.netlify.app/</loc>
   </url>
   <url>
+    <loc>https://penta-scale.netlify.app/scales</loc>
+  </url>
+  <url>
     <loc>https://penta-scale.netlify.app/quiz</loc>
   </url>
 </urlset>

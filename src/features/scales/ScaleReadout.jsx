@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
-import { notes } from '../music/notes'
-import { formatStep, getScale, DEGREES } from '../music/scales'
-import { SustainIcon } from './icons'
+import { notes } from '../../music/notes'
+import { formatStep, getScale, DEGREES } from '../../music/scales'
+import { SustainIcon } from '../../components/icons'
 
 // The notes of the selected run with the steps between them; lights up as the run plays.
 function ScaleReadout({

@@ -1,0 +1,90 @@
+[
+ {
+  "videoId": "5GFzug6b1pk",
+  "title": "06 And Nigus | አንድ ንጉስ | Meskerem Getu",
+  "duration": 255.0,
+  "key": "Fm",
+  "tonic": "F",
+  "mode": "minor",
+  "bpm": 103.4,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "zjFaUbC8chQ",
+  "title": "Track 11 Kemuse Yemilike | ከሙሴ የሚልቅ | Aster Abebe Vol 2",
+  "duration": 390.0,
+  "key": "Ab",
+  "tonic": "Ab",
+  "mode": "major",
+  "bpm": 166.7,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "v2ehvkpwPTo",
+  "title": "Track 18 Simihin Terahu | ስምህን ጠራሁ | Aster Abebe Vol 2",
+  "duration": 382.0,
+  "key": "C",
+  "tonic": "C",
+  "mode": "major",
+  "bpm": 136.4,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "H-Y4BZpOkSw",
+  "title": "መች እረሳሁ",
+  "duration": 299.0,
+  "key": "E",
+  "tonic": "E",
+  "mode": "major",
+  "bpm": 166.7,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "b8U1YzBiJ_o",
+  "title": "እረኛ//Eregna//Hanna Tekle 2020",
+  "duration": 292.0,
+  "key": "F",
+  "tonic": "F",
+  "mode": "major",
+  "bpm": 158.0,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "OSCWLblPxyc",
+  "title": "እግዚአብሄር ይመስገን//Egziabher Yimesgen//Hanna Tekle 2020",
+  "duration": 304.0,
+  "key": "Cm",
+  "tonic": "C",
+  "mode": "minor",
+  "bpm": 142.9,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "CocA4mTVKw4",
+  "title": "ይኸው ልቤን YIHEW LIBEN ካሮል ፈቃዱ CAROL FEKADU Track 08",
+  "duration": 427.0,
+  "key": "Em",
+  "tonic": "E",
+  "mode": "minor",
+  "bpm": 120.0,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ },
+ {
+  "videoId": "RuHbBro5u2g",
+  "title": "ጌታ ነው በሕይወቴ",
+  "duration": 257.0,
+  "key": "C",
+  "tonic": "C",
+  "mode": "major",
+  "bpm": 166.7,
+  "analyzedAt": "2026-11-12",
+  "pick": false
+ }
+]

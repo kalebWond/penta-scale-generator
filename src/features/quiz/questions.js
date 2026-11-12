@@ -1,4 +1,4 @@
-import { getScaleKeys } from '../music/scales'
+import { getScaleKeys } from '../../music/scales'
 
 // Two items sound the same when their interval patterns match: played from the same note they
 // are literally the same pitches, so the quiz treats them as one answer.

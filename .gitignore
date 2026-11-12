@@ -22,5 +22,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.claude
-# local planning notes
-/plans
+# local notes: status, plans, decisions
+/notes
+
+# python
+__pycache__/
+
+# songs analyzed from local audio files, and their audio (served by the dev server only)
+/local-songs
+# the analysis tool's cache of raw model output
+/tools/.cache
+
+# musicians’ chord corrections made in dev (the live site keeps them in Netlify Blobs)
+/local-corrections

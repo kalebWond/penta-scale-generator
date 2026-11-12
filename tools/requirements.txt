@@ -1,0 +1,7 @@
+# Local analysis tool only. Install torch/torchaudio first, as a matching pair, from the CPU index:
+#   pip install --index-url https://download.pytorch.org/whl/cpu "torch==2.11.0" "torchaudio==2.11.0"
+# Then:
+#   pip install -r tools/requirements.txt
+lv-chordia
+beat-this
+yt-dlp

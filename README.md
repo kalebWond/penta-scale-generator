@@ -76,7 +76,7 @@ One subtlety worth knowing: the start positions are labelled **1st, 2nd, 5th, 6t
 
 ### 🎧 The quiz is data too
 
-`src/quiz/` is pure in the same way. What the quiz asks about is a list in `src/quiz/catalog.js`, and the difficulty ladder is a table in `src/quiz/levels.js`. To quiz a variation, add a line:
+`src/features/quiz/` is pure in the same way. What the quiz asks about is a list in `src/features/quiz/catalog.js`, and the difficulty ladder is a table in `src/features/quiz/levels.js`. To quiz a variation, add a line:
 
 ```js
 { scaleId: 'TIZITA-1', degree: 4 },   // "Tizita major from the 6th"
@@ -134,13 +134,20 @@ Needs a reasonably current browser: Web Audio, Pointer Events and CSS container 
 
 ```
 src/
+  App.jsx       the shell: sounds, shared instrument state, home screen or the current feature
+  features/
+    registry.js every page as data: path, title, home-screen card
+    scales/     /scales: pick a scale, key and start note; hear the run
+    quiz/       /quiz: ear training — catalog, levels, questions, stats (pure, tested)
+    songs/      /songs: song chords in time with the YouTube video
+  components/   shared: Piano (case + keyboard), Keyboard, Home, StartGate, Segmented, icons
+  hooks/        shared: scale playback, computer-keyboard input, routing
   music/        scale and note theory — pure, tested, no dependencies
   audio/        Web Audio engine: sample loading, voices, scheduling
-  quiz/         ear-training catalog, levels, questions, stats — pure, tested
-  hooks/        scale playback, computer-keyboard input, quiz state, the /quiz route
-  components/   Keyboard, Toolbar, ScaleReadout, EquivalentScales, StartGate, QuizPanel, ProgressSheet
   lib/          orientation and fullscreen helpers
   sounds/       25 piano samples, C3–C5
+
+tools/          the song analyzer (Python): writes public/songs/<videoId>.json
 
 index.html      the entry point Vite serves
 vite.config.js  build, dev server and test config

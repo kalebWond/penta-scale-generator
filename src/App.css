@@ -305,10 +305,122 @@ select {
   font-size: 0.85rem;
 }
 
-.seg--mode button {
-  min-width: 0;
-  padding: 0 12px;
-  font-weight: 600;
+/* ---------- home: the launcher, and the way back to it ---------- */
+
+/* Inside a feature the brand plate is the home button: same plate, with a back arrow. */
+.brand--home {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.brand--home:hover {
+  border-color: var(--gold);
+  background: rgba(242, 181, 68, 0.12);
+}
+
+.brand--home .icon {
+  color: var(--gold);
+}
+
+.icon--line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 860px;
+  margin: auto;                 /* centred on the table, like the piano */
+  text-align: center;
+}
+
+.home__tag {
+  margin: 0 0 6px;
+  color: #d8c6ad;
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+/* Each card is a small lacquered panel, the same finish as the piano case. */
+.home__card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 18px 14px 16px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background:
+    linear-gradient(105deg, transparent 18%, rgba(255, 255, 255, 0.045) 38%, transparent 52%),
+    linear-gradient(#3c3c40, #1a1a1d 14%, #0e0e10 52%, #060607);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 3px rgba(0, 0, 0, 0.5),
+    0 16px 30px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s, border-color 0.15s;
+}
+
+.home__card:hover {
+  border-color: rgba(242, 181, 68, 0.6);
+}
+
+.home__card:active {
+  transform: translateY(1px);
+}
+
+.home__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(242, 181, 68, 0.35);
+  border-radius: 50%;
+  background: rgba(242, 181, 68, 0.08);
+  color: var(--gold);
+}
+
+.feature-icon {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home__label {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: var(--font-display-style);
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+
+.home__desc {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.home .gate__status {
+  color: #c9b8a2;
 }
 
 /* ---------- quiz ---------- */
@@ -686,6 +798,637 @@ select {
   box-shadow: 0 0 0 3px rgba(242, 181, 68, 0.35);
 }
 
+/* ---------- songs: one song ----------
+   The panel holds the song in a grid: the header, the chord now and the video's controls on the
+   left, a small video on the right, and the sliding track (the point of the page) under both.
+   The piano gets the rest of the height. YouTube requires an embedded player to be at least
+   200px by 200px, so the video is exactly that tall: what that saves goes to the track. */
+
+.piano--song {
+  height: 100%;
+}
+
+.piano--song .piano__panel {
+  flex: none;
+}
+
+.piano--song .piano__bed {
+  min-height: 70px;
+}
+
+.songview {
+  --video-w: clamp(240px, 28vw, 356px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--video-w);
+  grid-template-rows: auto 1fr auto auto auto;
+  grid-template-areas:
+    "head     video"
+    "now      video"
+    "controls video"
+    "track    track"
+    "review   review";
+  gap: 8px 12px;
+}
+
+.songview__head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.songview__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.songview__now {
+  grid-area: now;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: 4px 18px;
+  min-width: 0;
+}
+
+.songview__side {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.songview__video {
+  grid-area: video;
+  width: var(--video-w);
+  height: max(200px, calc(var(--video-w) * 9 / 16));
+  overflow: hidden;
+  background: #000;
+  border-radius: 7px;
+}
+
+.songview__video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.songview__track {
+  grid-area: track;
+  min-width: 0;
+}
+
+.songview__controls {
+  grid-area: controls;
+  min-width: 0;
+}
+
+/* the video's own controls, drawn here (YouTube's are hidden) */
+.player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.player__btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.player__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.player__btn:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.player__btn--main {
+  width: 38px;
+  height: 38px;
+  color: var(--gold-ink);
+  background: linear-gradient(#f7c463, var(--gold));
+  border-color: transparent;
+}
+
+.player__btn .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.player__btn .icon--speaker {
+  width: 17px;
+}
+
+.player__btn .icon--skip {
+  width: 19px;
+  height: 19px;
+}
+
+.icon__stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.player__time {
+  flex: none;
+  min-width: 2.6em;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.player__time--total {
+  text-align: right;
+}
+
+/* a thin bar, gold up to where the video is */
+.player__seek,
+.player__volume {
+  --progress: 0%;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.player__seekwrap {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.player__seek {
+  flex: 1 1 auto;
+}
+
+/* the time under the pointer, or under the handle while it's dragged */
+.player__tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 6;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* The volume slider: hidden until the pointer is over the speaker (or it has keyboard focus),
+   then it stands up above it; it tucks away a moment after the pointer leaves. It's a normal
+   slider turned on its side, which works the same in every browser. */
+.player__sound {
+  position: relative;
+  flex: none;
+}
+
+.player__volume-pop {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 5;
+  width: 40px;
+  height: 122px;
+  padding-bottom: 8px;           /* a bridge, so the pointer can move up into it */
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s 0.5s, visibility 0s 0.7s;
+}
+
+.player__volume-pop::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.player__sound:hover .player__volume-pop,
+.player__sound:focus-within .player__volume-pop {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.player__volume {
+  position: absolute;
+  top: 57px;
+  left: 50%;
+  width: 90px;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* touch screens set volume with the phone's own buttons: just mute there */
+@media (pointer: coarse) {
+  .player__volume-pop {
+    display: none;
+  }
+}
+
+.icon--skip {
+  overflow: visible;
+}
+
+.icon__text {
+  font-family: var(--font-ui);
+  font-size: 6.4px;
+  font-weight: 700;
+  fill: currentColor;
+}
+
+.player__seek::-webkit-slider-runnable-track,
+.player__volume::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gold) var(--progress), var(--line) var(--progress));
+}
+
+.player__seek::-moz-range-track,
+.player__volume::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gold) var(--progress), var(--line) var(--progress));
+}
+
+.player__seek::-webkit-slider-thumb,
+.player__volume::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+  -webkit-appearance: none;
+}
+
+.player__seek::-moz-range-thumb,
+.player__volume::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.player__seek:disabled,
+.player__volume:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lane__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.lane__meta b {
+  color: var(--text);
+}
+
+/* Chord names use the text face, not the display one: Cinzel has no lowercase, so "Em"
+   would read as "EM" and a minor chord would look major. */
+.lane__now {
+  min-width: 2.2em;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 11vh, 4.5rem);
+  line-height: 1;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.lane__rest {
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.lane__rest .feature-icon {
+  width: 0.8em;
+  height: 0.8em;
+}
+
+.lane__beats {
+  display: flex;
+  gap: 6px;
+  height: 10px;
+}
+
+.lane__beats i {
+  width: 10px;
+  height: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.lane__beats i:first-child {
+  border-color: rgba(242, 181, 68, 0.6);    /* the downbeat */
+}
+
+.lane__beats i.is-on {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.lane__nextname {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.lane__nextname b {
+  font-size: 1.1em;
+  color: var(--text);
+}
+
+.lane__warn {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #f0a39b;
+}
+
+/* the sliding track: bars of beat cells, a gap between bars, a playhead */
+.track {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 7px;
+  background: #0d0d0f;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.track.is-playing {
+  scrollbar-width: none;      /* it's following the playhead; the bar would only flicker */
+}
+
+.track.is-playing::-webkit-scrollbar {
+  display: none;
+}
+
+.track__inner {
+  position: relative;
+  height: 84px;
+}
+
+/* Every cell is exactly one beat wide and they sit edge to edge: the beat lines are borders
+   inside the cells (box-sizing is border-box), so they take no room and the playhead moves at
+   an even speed. A bar starts with a stronger, gold line. */
+.track__cell {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: var(--beat-w);
+  padding: 0 0 0 7px;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 0;
+}
+
+.track__cell.is-bar {
+  border-left: 2px solid rgba(242, 181, 68, 0.7);
+}
+
+.track__cell.is-change {
+  overflow: visible;           /* a long name may run into the next, empty beat */
+  z-index: 1;
+}
+
+.track__cell.is-change {
+  background: #3d3729;
+}
+
+.track__cell.is-silence {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+}
+
+.track__cell .feature-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.track__cell.is-now {
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+.track__cell:hover {
+  filter: brightness(1.25);
+}
+
+.track__head {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(226, 87, 76, 0.8);
+}
+
+.song__msg {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
+.song__msg code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text);
+}
+
+/* ---------- songs: the library (search, picks, every song) ---------- */
+
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 1040px;
+  max-height: 100%;
+  margin: auto;
+  padding: 12px 14px 14px;
+  border-radius: 14px;
+  background:
+    linear-gradient(105deg, transparent 18%, rgba(255, 255, 255, 0.045) 38%, transparent 52%),
+    linear-gradient(#3c3c40, #1a1a1d 14%, #0e0e10 52%, #060607);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 2px 3px rgba(0, 0, 0, 0.5),
+    0 26px 50px rgba(0, 0, 0, 0.62);
+}
+
+.library__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.library__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+
+.library__search {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 460px;
+  height: 38px;
+  margin-left: auto;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.library__search::placeholder {
+  color: var(--muted);
+}
+
+.library__body {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.library__section + .library__section {
+  margin-top: 14px;
+}
+
+.library__heading {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.songrow,
+.songgrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 12px;
+}
+
+.songrow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(180px, 220px);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.songgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.songcard {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0 0 8px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.songcard:hover {
+  border-color: var(--gold);
+}
+
+.songcard__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.songcard__title {
+  display: -webkit-box;
+  margin: 2px 9px 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.songcard__meta {
+  margin: 0 9px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 /* ---------- similar scales sheet ---------- */
 
 .sheet-backdrop {
@@ -927,7 +1670,8 @@ select {
     padding: 0 6px;
   }
 
-  .toolbar .brand,
+  /* the home button keeps just its arrow */
+  .brand--home__name,
   .readout__title {
     display: none;
   }
@@ -978,26 +1722,165 @@ select {
   .gate__hint, .gate__credit {
     display: none;
   }
+
+  /* the track runs beside the video, which can't go below 200px tall */
+  .songview {
+    gap: 5px 8px;
+    grid-template-areas:
+      "head     video"
+      "now      video"
+      "controls video"
+      "track    video"
+      "review   review";
+  }
+
+  .player {
+    flex-wrap: wrap;
+    gap: 2px 6px;
+  }
+
+  .player__btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .player__btn--main {
+    width: 30px;
+    height: 30px;
+  }
+
+  .player__btn .icon--skip {
+    width: 17px;
+    height: 17px;
+  }
+
+  .player__time {
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+
+  .player__time:not(.player__time--total) {
+    margin-left: auto;
+  }
+
+  .player__time--total::before {
+    content: '/ ';
+  }
+
+  .player__seekwrap {
+    order: 9;
+    flex-basis: 100%;
+  }
+
+  .player__seek {
+    height: 14px;
+  }
+
+  .songview__title {
+    font-size: 0.8rem;
+  }
+
+  .songview__now {
+    gap: 2px 12px;
+  }
+
+  .lane__meta, .lane__nextname {
+    font-size: 0.72rem;
+  }
+
+  .lane__now {
+    font-size: clamp(1.6rem, 10vh, 2.2rem);
+  }
+
+  /* kept compact so the column beside the video stays within its 200px */
+  .songview__side {
+    gap: 2px;
+  }
+
+  .lane__beats {
+    gap: 4px;
+    height: 8px;
+  }
+
+  .lane__beats i {
+    width: 8px;
+    height: 8px;
+  }
+
+  .track__inner {
+    height: 62px;
+  }
+
+  .track__cell {
+    top: 6px;
+    bottom: 6px;
+    padding-left: 5px;
+    font-size: 1.1rem;
+  }
+
+  .track__cell .feature-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .library {
+    gap: 8px;
+    padding: 8px 9px 10px;
+  }
+
+  .library__search, .library__head .btn {
+    height: 34px;
+  }
+
+  .songrow {
+    grid-auto-columns: minmax(150px, 170px);
+  }
+
+  .songgrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .home {
+    gap: 6px;
+  }
+
+  .home__tag {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .home__cards {
+    gap: 10px;
+  }
+
+  .home__card {
+    gap: 4px;
+    padding: 10px 10px 12px;
+  }
+
+  .home__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .feature-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .home__label {
+    font-size: 1.05rem;
+  }
+
+  .home__desc {
+    font-size: 0.78rem;
+  }
 }
 
 /* ---------- small phones in landscape (iPhone SE: 667px): one toolbar row, not two ----------
-   The mode switch shows only the mode you'd switch *to*, as a single button, and the rest
-   of the row gives up a little padding. */
+   The row gives up a little padding. */
 
 @media (max-height: 520px) and (max-width: 760px) {
-  .seg--mode button.is-on {
-    display: none;
-  }
-
-  .seg--mode button {
-    border-left: 0;
-    padding: 0 8px;
-  }
-
-  .seg--mode button::after {
-    content: ' →';
-  }
-
   .toolbar {
     gap: 4px 7px;
   }
@@ -1029,4 +1912,527 @@ select {
     transform: translateX(100vw) rotate(90deg);
     transform: translateX(100dvw) rotate(90deg);
   }
+}
+
+/* ---- Add songs (dev only): paste links or drop audio files; the dev server analyzes them ---- */
+.ingest {
+  margin-bottom: 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.ingest__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  color: var(--text);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ingest__title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ingest__badge {
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-ink);
+  background: var(--gold);
+  border-radius: 999px;
+}
+
+.ingest__chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.ingest__body {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.ingest__links {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ingest__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  resize: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.ingest__input::placeholder {
+  color: var(--muted);
+}
+
+.ingest__drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px 6px;
+  padding: 14px 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+  border: 1.5px dashed var(--line);
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ingest__drop.is-over {
+  color: var(--text);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border-color: var(--gold);
+}
+
+.ingest__pick {
+  padding: 0;
+  font: inherit;
+  color: var(--gold);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.ingest__note {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+}
+
+.ingest__force {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.ingest__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--red);
+}
+
+.ingest__jobs {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingest__job {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 6px 4px 10px;
+  background: var(--surface);
+  border-radius: 7px;
+}
+
+.ingest__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.ingest__job.is-running .ingest__dot {
+  background: var(--gold);
+  animation: ingest-pulse 1.2s ease-in-out infinite;
+}
+
+.ingest__job.is-done .ingest__dot {
+  background: var(--green);
+}
+
+.ingest__job.is-failed .ingest__dot {
+  background: var(--red);
+}
+
+@keyframes ingest-pulse {
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ingest__job.is-running .ingest__dot {
+    animation: none;
+  }
+}
+
+.ingest__jobtext {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ingest__jobtitle {
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ingest__jobstatus {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.ingest__job.is-failed .ingest__jobstatus {
+  color: var(--red);
+}
+
+.ingest__jobactions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.ingest__dismiss {
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ingest__dismiss:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+/* A song from an audio file: a card where the video would be, and on its library card. */
+.songview__video--file,
+.songcard__thumb--file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  background: linear-gradient(135deg, var(--surface-2), #000);
+}
+
+.songview__video--file .icon,
+.songcard__thumb--file .icon {
+  width: 34px;
+  height: 34px;
+  color: var(--gold);
+}
+
+.ingest__go {
+  color: var(--gold-ink);
+  background: var(--gold);
+}
+
+.ingest__go:disabled {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* dev only: which chord model the song page shows (lv-chordia, BTC, BTC CL, ChordNet) */
+.songview__models {
+  flex: none;
+}
+
+.songview__models button {
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ---- Correcting chords: a musician's share link turns this on (see ReviewBar, ChordPicker) ---- */
+.songview__review {
+  grid-area: review;
+  min-width: 0;
+}
+
+.lane__checked {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* edited beats are outlined while correcting, not for everyone else */
+.track.is-editing .track__cell.is-edited {
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+
+.track__cell.is-selected {
+  box-shadow: inset 0 0 0 2px var(--gold);
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+}
+
+.seg--small button {
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 0.78rem;
+}
+
+.review {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.review__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.review__who {
+  margin-right: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.review__who b {
+  color: var(--text);
+}
+
+.review__count {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.review__publish {
+  color: var(--gold-ink);
+  background: var(--gold);
+}
+
+.review__hint,
+.review__msg {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.review__msg {
+  color: var(--green);
+}
+
+.review__msg--error {
+  color: var(--red);
+}
+
+.review__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.review__details label {
+  display: grid;
+  gap: 3px;
+}
+
+.review__details select,
+.review__details textarea,
+.picker__bass select {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.review__shift {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review__shift b {
+  min-width: 9em;
+  text-align: center;
+  color: var(--text);
+}
+
+.review__note {
+  flex: 1 1 260px;
+}
+
+.review__note textarea {
+  resize: vertical;
+}
+
+/* the chord picker floats over the track, above the beat it's for */
+.picker {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+
+.picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.picker__head b {
+  color: var(--text);
+}
+
+.picker__close {
+  width: 28px;
+  height: 28px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+}
+
+.picker__group {
+  display: grid;
+  gap: 5px;
+}
+
+.picker__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.picker__chips,
+.picker__roots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.picker__chip,
+.picker__root {
+  min-width: 42px;
+  height: 34px;
+  padding: 0 10px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.picker__chip:hover,
+.picker__root:hover {
+  border-color: var(--gold);
+}
+
+.picker__chip--hint small {
+  margin-left: 4px;
+  font-weight: 400;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.picker__root {
+  min-width: 38px;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 0.85rem;
+}
+
+.picker__root[aria-pressed='true'] {
+  color: var(--gold-ink);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.picker__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker__row--end {
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.picker__bass {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.picker__use {
+  margin-left: auto;
+  color: var(--gold-ink);
+  background: var(--gold);
+}
+
+.picker__use:disabled {
+  color: var(--muted);
+  background: var(--surface-2);
 }

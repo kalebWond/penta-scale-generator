@@ -90,3 +90,26 @@ export function useScalePlayer(onNote) {
 
     return { playing, play, playRuns, stop }
 }
+
+// The player plus what the keyboard and readout need: which keys are lit as the run plays,
+// and which step of the run is sounding.
+export function useRunPlayer() {
+    const [lit, setLit] = useState(() => new Set())
+    const [step, setStep] = useState(null)
+    const player = useScalePlayer(useCallback((key, stepIndex, isOn) => {
+        if (key === null) {
+            setLit(new Set())
+            setStep(null)
+        } else if (isOn) {
+            setLit(s => new Set(s).add(key))
+            setStep(stepIndex)
+        } else {
+            setLit(s => {
+                const next = new Set(s)
+                next.delete(key)
+                return next
+            })
+        }
+    }, []))
+    return { ...player, lit, step }
+}
