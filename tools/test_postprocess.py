@@ -2,7 +2,7 @@ import unittest
 
 from postprocess import (
     build_segments, build_timeline, clean_beats, detect_beats_per_bar, detect_key, detect_tempo,
-    parse_chord, spell_interval,
+    fix_dotted_stretches, fix_offbeat_stretches, meter_from_changes, parse_chord, place_bars, spell_interval,
 )
 
 
@@ -89,6 +89,89 @@ class CleanBeats(unittest.TestCase):
 
     def test_clean_beats_are_unchanged(self):
         self.assertEqual(clean_beats(BEATS, DOWNBEATS), (BEATS, DOWNBEATS))
+
+    def test_a_double_time_stretch_keeps_the_beat(self):
+        # From 10 s to 14 s the model also finds every off-beat, and at 12.25 it finds only the
+        # off-beat first: keeping the first of each close pair would flip onto the off-beat.
+        grid = [round(i * 0.5, 2) for i in range(41)]
+        extra = [round(10.25 + i * 0.5, 2) for i in range(8)]
+        beats = sorted(set(grid + extra))
+        cleaned, downbeats = clean_beats(beats, [10.25, 11.0])
+        self.assertEqual([round(t, 2) for t in cleaned], grid)
+        self.assertEqual(downbeats, [11.0])   # one on an off-beat, between two beats, is dropped
+
+
+class DottedStretches(unittest.TestCase):
+    def test_a_slower_pulse_is_spread_back_onto_the_beat(self):
+        # A beat every 0.4 s, but from 4 s to 8.8 s the model found one every 0.6 s (2 for 3).
+        before = [round(i * 0.4, 2) for i in range(11)]          # 0 .. 4.0
+        slow = [round(4.0 + i * 0.6, 2) for i in range(1, 9)]    # 4.6 .. 8.8
+        after = [round(8.8 + i * 0.4, 2) for i in range(1, 11)]  # 9.2 .. 12.8
+        fixed = fix_dotted_stretches(before + slow + after)
+        self.assertEqual([round(t, 2) for t in fixed], [round(i * 0.4, 2) for i in range(33)])
+
+    def test_a_short_run_is_left_alone(self):
+        beats = [i * 0.4 for i in range(11)] + [4.6, 5.2] + [5.2 + i * 0.4 for i in range(1, 11)]
+        self.assertEqual(fix_dotted_stretches(beats), beats)
+
+    def test_steady_beats_are_unchanged(self):
+        self.assertEqual(fix_dotted_stretches(BEATS), BEATS)
+
+
+class OffbeatStretches(unittest.TestCase):
+    # A beat every 0.5 s with chords changing every 1 s. From 10 s to 15 s the beat model is on
+    # the off-beats (10.75, 11.25, ...): a 0.75 s gap (1.5 beats) on the way in and on the way out.
+    ON = [i * 0.5 for i in range(21)]                       # 0 .. 10
+    OFF = [10.75 + i * 0.5 for i in range(9)]               # 10.75 .. 14.75
+    AFTER = [15.5 + i * 0.5 for i in range(10)]             # 15.5 .. 20
+    RAW = [seg(t, t + 1.0, c) for t, c in zip(range(20), ["C:maj", "G:maj"] * 10)]
+
+    def test_a_stretch_on_the_off_beats_moves_back_on_the_beat(self):
+        fixed = fix_offbeat_stretches(self.ON + self.OFF + self.AFTER, self.RAW)
+        self.assertEqual([round(t, 2) for t in fixed], [i * 0.5 for i in range(41)])
+
+    def test_a_stretch_on_the_beat_is_left_alone(self):
+        beats = self.ON + [10.75 + i * 0.5 for i in range(10)]   # a 1.5-beat gap, then on the beat
+        raw = [seg(t, t + 1.5, c) for t, c in zip([0, 1.5, 3, 4.5, 6, 7.5, 9, 10.75, 12.25, 13.75],
+                                                   ["C:maj", "G:maj"] * 5)]
+        self.assertEqual(fix_offbeat_stretches(beats, raw), beats)
+
+    def test_without_enough_chord_changes_nothing_moves(self):
+        beats = self.ON + self.OFF + self.AFTER
+        self.assertEqual(fix_offbeat_stretches(beats, [seg(0, 20, "C:maj")]), beats)
+
+
+class Bars(unittest.TestCase):
+    def test_meter_from_how_far_apart_chords_change(self):
+        self.assertEqual(meter_from_changes(list(range(0, 60, 3)), 4), 3)
+        self.assertEqual(meter_from_changes(list(range(0, 80, 4)), 3), 4)
+        self.assertEqual(meter_from_changes(list(range(0, 120, 6)), 4), 3)   # 6/8 is counted in 3
+
+    def test_meter_falls_back_to_the_beat_model(self):
+        self.assertEqual(meter_from_changes([0, 3, 6], 4), 4)   # too few changes to tell
+        self.assertEqual(meter_from_changes([], 6), 3)
+        self.assertEqual(meter_from_changes([], 2), 4)
+
+    def test_bars_start_where_chords_change_not_where_the_model_says(self):
+        # Chords change every 3 beats from the 2nd beat; the model's downbeats are scattered.
+        labels = ["C:maj", "G:maj", "A:min", "F:maj"] * 5
+        raw = [seg(BEATS[1 + 3 * k], BEATS[4 + 3 * k], c) for k, c in enumerate(labels[:19])]
+        segments, _ = build_segments(raw, BEATS)
+        bars = place_bars(BEATS, segments, [0.5, 1.5, 2.5, 4.0, 5.0], 3)
+        self.assertEqual(bars[:5], [1.0, 2.5, 4.0, 5.5, 7.0])
+        self.assertTrue(all(round((b - 1.0) / 1.5, 6).is_integer() for b in bars))
+
+    def test_bars_shift_once_with_a_short_bar_when_the_chords_do(self):
+        # 6 bars from beat 0, then the beat grid gains a beat: the chords change 1 beat later.
+        changes = list(range(0, 18, 3)) + list(range(19, 58, 3))
+        labels = ["C:maj", "G:maj"] * 20
+        raw = [seg(BEATS[a], BEATS[b], labels[k]) for k, (a, b) in enumerate(zip(changes, changes[1:]))]
+        segments, _ = build_segments(raw, BEATS)
+        bars = place_bars(BEATS, segments, [], 3)
+        lengths = [round((b - a) / 0.5) for a, b in zip(bars, bars[1:])]
+        self.assertEqual(sorted(set(lengths)), [1, 3])   # one short bar, never a long one
+        self.assertEqual(lengths.count(1), 1)
+        self.assertIn(BEATS[19], bars)
 
 
 class Segments(unittest.TestCase):
