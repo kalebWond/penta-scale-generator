@@ -4,6 +4,13 @@ import { dropFocus } from './ChordTrack'
 import { formatTime } from './timeline'
 
 const SKIP = 10     // s, for the back and forward buttons
+const THUMB = 14    // px: the seek bar's handle. Its centre runs from THUMB/2 to width - THUMB/2.
+
+// Where on the seek bar a time sits, in px from its left edge, and the reverse.
+const xOfTime = (el, t, duration) =>
+    THUMB / 2 + (duration ? Math.min(Math.max(t / duration, 0), 1) : 0) * (el.clientWidth - THUMB)
+const timeOfX = (el, x, duration) =>
+    Math.min(Math.max((x - THUMB / 2) / Math.max(1, el.clientWidth - THUMB), 0), 1) * duration
 
 // The video's controls, drawn by the page (YouTube's own are hidden). One row on wide screens:
 // [restart] [-10] [play] [+10]  0:14 ━━━━━━━━━ 7:07  [sound]. On phones the seek bar gets a row
@@ -16,6 +23,20 @@ function PlayerControls({ yt }) {
     const dragRef = useRef(null)
     const shown = dragging ?? yt.time
     const duration = yt.duration || 0
+
+    // A time bubble over the seek bar: where the pointer is while it hovers, where the handle is
+    // while it's dragged (by pointer, finger or arrow keys). { x: px from the bar's left, t }
+    const [hover, setHover] = useState(null)
+    const seekEl = useRef(null)
+    const tip = dragging !== null && seekEl.current
+        ? { x: xOfTime(seekEl.current, dragging, duration), t: dragging }
+        : hover
+
+    const onHover = (e) => {
+        if (!yt.ready || !duration || e.pointerType === 'touch') return
+        const x = e.clientX - e.currentTarget.getBoundingClientRect().left
+        setHover({ x, t: timeOfX(e.currentTarget, x, duration) })
+    }
 
     const drag = (value) => {
         dragRef.current = value
@@ -52,11 +73,20 @@ function PlayerControls({ yt }) {
             </button>
 
             <span className="player__time">{formatTime(shown)}</span>
-            <input type="range" className="player__seek" aria-label="Seek" disabled={!yt.ready}
-                min="0" max={duration} step="0.1" value={Math.min(shown, duration)}
-                style={{ '--progress': percent(shown, duration) }}
-                onChange={e => drag(Number(e.target.value))}
-                onPointerUp={(e) => { commit(); e.currentTarget.blur() }} onKeyUp={commit} onBlur={commit} />
+            <span className="player__seekwrap">
+                <input type="range" className="player__seek" aria-label="Seek" disabled={!yt.ready} ref={seekEl}
+                    min="0" max={duration} step="0.1" value={Math.min(shown, duration)}
+                    aria-valuetext={`${formatTime(shown)} of ${formatTime(duration)}`}
+                    style={{ '--progress': percent(shown, duration) }}
+                    onChange={e => drag(Number(e.target.value))}
+                    onPointerMove={onHover} onPointerLeave={() => setHover(null)}
+                    onPointerUp={(e) => { commit(); e.currentTarget.blur() }} onKeyUp={commit} onBlur={commit} />
+                {tip && (
+                    <span className="player__tip" style={{ left: tip.x }} aria-hidden="true">
+                        {formatTime(tip.t)}
+                    </span>
+                )}
+            </span>
             <span className="player__time player__time--total">{formatTime(duration)}</span>
 
             <div className="player__sound">

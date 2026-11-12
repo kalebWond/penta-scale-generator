@@ -974,8 +974,34 @@ select {
   -webkit-appearance: none;
 }
 
+.player__seekwrap {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .player__seek {
   flex: 1 1 auto;
+}
+
+/* the time under the pointer, or under the handle while it's dragged */
+.player__tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  z-index: 6;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 /* The volume slider: hidden until the pointer is over the speaker (or it has keyboard focus),
@@ -1739,9 +1765,12 @@ select {
     content: '/ ';
   }
 
-  .player__seek {
+  .player__seekwrap {
     order: 9;
     flex-basis: 100%;
+  }
+
+  .player__seek {
     height: 14px;
   }
 
